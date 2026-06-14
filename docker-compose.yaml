@@ -50,21 +50,11 @@ services:
     ports:
       - "5678:5678"
     environment:
-      - N8N_BASIC_AUTH_ACTIVE=true
-      - N8N_BASIC_AUTH_USER=admin
-      - N8N_BASIC_AUTH_PASSWORD=admin
-      - N8N_RUNNERS_ENABLED=true
-      - GENERIC_TIMEZONE="Europe/Zagreb"
-      - TZ=Europe/Zagreb
-      - N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS=true 
-      - N8N_HOST=localhost
-      - N8N_PORT=5678
+      - ./.env
     volumes:
       - ./n8n_data:/home/node/.n8n
     networks:
-    - notification-service-network 
-    - chat_sky_track_app-network   
-    #- chat_sky_track_cronjobs-network
+      - n8n 
     restart: unless-stopped
 
   pushgateway:
@@ -74,7 +64,6 @@ services:
       - "9091:9091"
     networks:
       - grafana
-      #- chat_sky_track_cronjobs-network
     restart: always
 
   db:
@@ -95,14 +84,7 @@ services:
       db_network:
         ipv4_address: 10.5.0.10
       grafana:
-      chat_sky_track_app-network:
     restart: always
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USER_NAME} -d ${DATABASE}"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
-      start_period: 10s
 
   prometheus:
     image: prom/prometheus
@@ -127,6 +109,7 @@ services:
     container_name: grafana
     depends_on:
       - prometheus
+      - loki
     env_file:
       - ./.env
     ports:
@@ -152,7 +135,6 @@ services:
       - elasticsearch_data:/usr/share/elasticsearch/data
     networks:
       - grafana
-      #- db_network
       - elascticsearch_network
     restart: always
 
@@ -169,6 +151,15 @@ services:
       - elascticsearch_network
     restart: always
 
+  redis:
+    image: redis:7-alpine
+    container_name: fake-vinted-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+
 volumes:
   loki_data:
   n8n_data:
@@ -176,23 +167,15 @@ volumes:
   elasticsearch_data:
   grafana_data:
   prometheus_data:
-  alloy_chat_logs_app:
-  alloy_notification_logs_app:
-  alloy_cron_jobs_logs_app:
+  redis_data:
 
 networks:
-  notification-service-network:
+  n8n:
     driver: bridge
-
-  chat_sky_track_app-network:
-    driver: bridge
-
   grafana:
     driver: bridge
-  
   elascticsearch_network:
     driver: bridge
-
   db_network:
     driver: bridge
     ipam:
