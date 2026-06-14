@@ -16,5 +16,8 @@
     "strictBindCallApply": false,
     "forceConsistentCasingInFileNames": false,
     "noFallthroughCasesInSwitch": false
+  },
+    "ts-node": {
+    "esm": false
   }
 }

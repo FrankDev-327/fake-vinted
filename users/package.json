@@ -19,7 +19,7 @@
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "typeorm:create_subscriber": "typeorm subscriber:create",
-    "typeorm:create": "typeorm migration:create",
+    "typeorm:create": "ts-node ./node_modules/typeorm/cli.js migration:create",
     "test:units": "jest --runTestsByPath src/**/tests/units/*.spec.ts --detectOpenHandles --silent",
     "test:integration": "jest --runTestsByPath src/**/tests/integrations/*.spec.ts --detectOpenHandles --silent",
     "typeorm:generate": "pnpm run build && pnpm typeorm migration:generate -d orm.ts",
@@ -40,7 +40,8 @@
     "pg": "^8.21.0",
     "reflect-metadata": "^0.1.13",
     "rxjs": "^7.8.1",
-    "typeorm": "^1.0.0"
+    "typeorm": "0.3.20",
+    "winston": "^3.19.0"
   },
   "devDependencies": {
     "@nestjs/cli": "^10.0.0",
