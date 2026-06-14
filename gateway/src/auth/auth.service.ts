@@ -19,7 +19,8 @@ export class AuthService {
         const data = { username: authLoginDto.username, password: authLoginDto.password };
 
         try {
-            const response = await this.axiosService.post(url, data);
+            const headers = { 'Content-Type': 'application/json' };
+            const response = await this.axiosService.post(url, data, headers);
             return response; // Return the response from the authentication service
         } catch (error) {
             this.promGatewayService.incrementRequestCounter('POST', '/auth/login', 502);

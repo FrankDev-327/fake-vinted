@@ -12,4 +12,16 @@ gateway/.prettier*
 gateway/.prettiercache
 #gateway services
 
+#user services
+users/node_modules
+users/dist
+users/.env
+users/.vscode
+users/build
+users/logs
+users/.eslintrc*
+users/.prettier*
+#users services
+
+
 .env
