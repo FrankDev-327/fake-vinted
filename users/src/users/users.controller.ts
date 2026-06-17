@@ -4,6 +4,7 @@ import { UsersService } from './users.service';
 import { UserEntity } from '../entities/user.entity';
 import { UpdateUserDto } from './dto/users/update.user.dto';
 import { AuthUserDto } from './dto/users/auth.user.dto';
+import { LoginUserDto } from './users/auth.user.token.dto';
 
 @Controller('users')
 export class UsersController {
@@ -24,8 +25,8 @@ export class UsersController {
         return await this.usersService.updateUser(id, updateUserDto);
     }
 
-    @Post('authenticate')
-    async authenticateUser(@Body() authUserDto: AuthUserDto): Promise<UserEntity | null> {
+    @Post('/authenticate')
+    async authenticateUser(@Body() authUserDto: AuthUserDto): Promise<LoginUserDto> { 
         return await this.usersService.authenticateUser(authUserDto);
     }
 }

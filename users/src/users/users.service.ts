@@ -1,4 +1,4 @@
-import { Injectable, BadGatewayException, NotFoundException, ConflictException } from '@nestjs/common';
+import { Injectable, BadGatewayException, NotFoundException, ConflictException, UnauthorizedException } from '@nestjs/common';
 import { UserEntity } from '../entities/user.entity';
 import { LogsService } from '../loggers/logs.service';
 import { CreateUserDto } from './dto/users/create.user.dto';
@@ -7,11 +7,14 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { UpdateUserDto } from './dto/users/update.user.dto';
 import { comparePasswords } from '../utils/generic';
 import { AuthUserDto } from './dto/users/auth.user.dto';
+import { JwtService } from '@nestjs/jwt';
+import { LoginUserDto } from './users/auth.user.token.dto';
 
 @Injectable()
 export class UsersService {
     constructor(
         private readonly logsService: LogsService,
+        private jwtService: JwtService,
         @InjectRepository(UserEntity) private readonly userRepository: Repository<UserEntity>
     ) { }
 
@@ -36,20 +39,25 @@ export class UsersService {
         }
     }
 
-    async authenticateUser(authUserDto: AuthUserDto): Promise<UserEntity | null> {
+    async authenticateUser(authUserDto: AuthUserDto): Promise<LoginUserDto> { 
         try {
             const user = await this.userRepository.findOneBy({ username: authUserDto.username });
             if (!user) {
-                return null;
+                throw new NotFoundException('User not found');
             }
 
             const isPasswordValid = await comparePasswords(authUserDto.password, user.password);
             if (!isPasswordValid) {
-                return null;
+                throw new UnauthorizedException('Invalid credentials');
             }
 
             delete user.password; // Remove password from the returned user object
-            return user;
+            return {
+                access_token: this.jwtService.sign({
+                    username: user.username,
+                    id: user.id,
+                })
+            };
         } catch (error) {
             this.logsService.error(`Error authenticating user: ${(error as Error).message}`);
             throw new BadGatewayException('Error authenticating user');

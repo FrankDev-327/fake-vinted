@@ -5,7 +5,8 @@ import { PromGatewayModule } from '../prom-gateway/prom-gateway.module';
 import { AxiosServiceModule } from '../axios-service/axios-service.module';
 
 @Module({
-  imports: [AxiosServiceModule],
+  exports:[AuthService],
+  imports: [AxiosServiceModule, PromGatewayModule],
   providers: [AuthService],
   controllers: [AuthController]
 })

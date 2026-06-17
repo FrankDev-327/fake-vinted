@@ -1,31 +1,68 @@
 services:
-  
-  alloy:
-    image: grafana/alloy:latest
-    container_name: alloy
-    user: root
-    volumes:
-      - ./alloy/:/etc/alloy/
-      - /var/run/docker.sock:/var/run/docker.sock
-      - /:/rootfs:ro
-      - /var/run:/var/run:rw
-      - /sys:/sys:ro
-      - /var/lib/docker/:/var/lib/docker:ro
-      - /dev/disk/:/dev/disk:ro
-    networks:
-      - grafana
-      - db_network
-    restart: unless-stopped
-    command: run --server.http.listen-addr=0.0.0.0:12345 --storage.path=/var/lib/alloy/data /etc/alloy/config.alloy
-    env_file:
-      - ./.env
+  gateway:
+    container_name: ms_gateway
+    build:
+      context: ./gateway
+      dockerfile: Dockerfile
     ports:
-      - "12345:12345"
-      - "4317:4317"
-      - "4318:4318"
+      - "5000:5000"
     depends_on:
-      - loki
-      - prometheus
+      - users
+    env_file:
+      - ./gateway/.env
+    networks:
+      - gateway_network
+      - users_network
+    volumes:
+      - ./gateway_data:/app
+    restart: unless-stopped
+
+  users:
+    container_name: ms_users
+    build:
+      context: ./users
+      dockerfile: Dockerfile
+    ports:
+      - "4000:4000"
+    depends_on:
+      db:
+        condition: service_healthy
+    env_file:
+      - ./users/.env
+    networks:
+      - users_network
+      - gateway_network
+      - db_network
+    volumes:
+      - ./users_data:/app
+    restart: unless-stopped
+
+  # alloy:
+  #   image: grafana/alloy:latest
+  #   container_name: alloy
+  #   user: root
+  #   volumes:
+  #     - ./alloy/:/etc/alloy/
+  #     - /var/run/docker.sock:/var/run/docker.sock
+  #     - /:/rootfs:ro
+  #     - /var/run:/var/run:rw
+  #     - /sys:/sys:ro
+  #     - /var/lib/docker/:/var/lib/docker:ro
+  #     - /dev/disk/:/dev/disk:ro
+  #   networks:
+  #     - grafana
+  #     - db_network
+  #   restart: unless-stopped
+  #   command: run --server.http.listen-addr=0.0.0.0:12345 --storage.path=/var/lib/alloy/data /etc/alloy/config.alloy
+  #   env_file:
+  #     - ./.env
+  #   ports:
+  #     - "12345:12345"
+  #     - "4317:4317"
+  #     - "4318:4318"
+  #   depends_on:
+  #     - loki
+  #     - prometheus
 
   loki:
     image: grafana/loki:3.0.0
@@ -81,7 +118,13 @@ services:
       db_network:
         ipv4_address: 10.5.0.10
       grafana:
+      users_network:
     restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U webdevuser -d vinted_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   prometheus:
     image: prom/prometheus
@@ -165,8 +208,14 @@ volumes:
   grafana_data:
   prometheus_data:
   redis_data:
+  gateway_data:
+  users_data:
 
 networks:
+  gateway_network:
+    driver: bridge
+  users_network:
+    driver: bridge
   n8n:
     driver: bridge
   grafana:

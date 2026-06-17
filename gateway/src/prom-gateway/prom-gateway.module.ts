@@ -1,4 +1,8 @@
 import { Module } from '@nestjs/common';
+import { PromGatewayService } from './prom-gateway.service';
 
-@Module({})
-export class PromGatewayModule {}
+@Module({
+    exports: [PromGatewayService],
+    providers: [PromGatewayService]
+})
+export class PromGatewayModule { }
