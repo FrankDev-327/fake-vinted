@@ -23,5 +23,22 @@ users/.eslintrc*
 users/.prettier*
 #users services
 
+#listing services
+listing/node_modules
+listing/dist
+listing/.env
+listing/.vscode
+listing/coverage
+listing/build
+listing/.cache
+listing/logs
+listing/.eslintrc*
+listing/.prettier*
+listing/.prettiercache
+#listing services
+
+user_data
+gateway_data
+n8n_data
 
 .env

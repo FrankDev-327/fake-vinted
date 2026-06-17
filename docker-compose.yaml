@@ -13,6 +13,7 @@ services:
     networks:
       - gateway_network
       - users_network
+      - listing_network
     volumes:
       - ./gateway_data:/app
     restart: unless-stopped
@@ -36,6 +37,28 @@ services:
     volumes:
       - ./users_data:/app
     restart: unless-stopped
+
+  listing:
+    container_name: ms_listing
+    build:
+      context: ./listing
+      dockerfile: Dockerfile
+    ports:
+      - "4001:4001"
+    depends_on:
+      db:
+        condition: service_healthy
+    env_file:
+      - ./listing/.env
+    networks:
+      - listing_network
+      - users_network
+      - gateway_network
+      - db_network
+    volumes:
+      - ./listing_data:/app
+    restart: unless-stopped
+
 
   # alloy:
   #   image: grafana/alloy:latest
@@ -210,8 +233,11 @@ volumes:
   redis_data:
   gateway_data:
   users_data:
+  listing_data:
 
 networks:
+  listing_network:
+    driver: bridge
   gateway_network:
     driver: bridge
   users_network:
