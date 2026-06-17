@@ -1,0 +1,9 @@
+node_modules
+dist
+.vscode
+.eslintrc.js
+.prettierrc
+.md
+.git
+.mjs
+.jpg
