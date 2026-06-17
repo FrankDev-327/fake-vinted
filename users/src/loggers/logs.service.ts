@@ -42,9 +42,4 @@ export class LogsService implements LoggerService {
     debug?(message: any, ...optionalParams: any[]) {
         this.logger.debug(message, optionalParams);
     }
-
-    verbose?(message: any, ...optionalParams: any[]) {
-    }
-
-    fatal?(message: any, ...optionalParams: any[]) { }
 }

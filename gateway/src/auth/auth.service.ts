@@ -15,7 +15,7 @@ export class AuthService {
     ) { }
 
     async authenticateUser(authLoginDto: AuthLoginDto): Promise<any> {
-        const url = this.configService.get<string>('MS_USER_URL');
+        const url = `${this.configService.get<string>('MS_USER_URL')}/users/authenticate`;
         const data = { username: authLoginDto.username, password: authLoginDto.password };
 
         try {
@@ -23,9 +23,9 @@ export class AuthService {
             const response = await this.axiosService.post(url, data, headers);
             return response; // Return the response from the authentication service
         } catch (error) {
-            this.promGatewayService.incrementRequestCounter('POST', '/auth/login', 502);
+            this.promGatewayService.incrementRequestCounter('POST', '/users/authenticate', 502);
             this.logs.error(`Error authenticating user: ${(error as Error).message}`, error);
-            throw new BadGatewayException(); // Handle errors appropriately
+            throw new BadGatewayException((error as Error).message); // Handle errors appropriately
         }
     }
 }

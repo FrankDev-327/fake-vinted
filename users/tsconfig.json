@@ -17,7 +17,11 @@
     "forceConsistentCasingInFileNames": false,
     "noFallthroughCasesInSwitch": false
   },
-    "ts-node": {
+  "ts-node": {
     "esm": false
-  }
+  },
+  "include": [
+    "./src/**/*",
+    "./orm.ts"
+  ]
 }

@@ -5,9 +5,6 @@ services:
     container_name: alloy
     user: root
     volumes:
-      - alloy_chat_logs_app:/mnt/chat_logs:ro
-      - alloy_notification_logs_app:/mnt/chat_logs_notification:ro
-      - alloy_cron_jobs_logs_app:/mnt/chat_logs_cron_jobs:ro
       - ./alloy/:/etc/alloy/
       - /var/run/docker.sock:/var/run/docker.sock
       - /:/rootfs:ro

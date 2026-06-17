@@ -5,7 +5,7 @@ export class CreateFirstUserTable1781461119443 implements MigrationInterface {
     public async up(queryRunner: QueryRunner): Promise<void> {
         try {
             const tableExists = await queryRunner.hasTable(this.tableName);
-            if (!tableExists) {
+            if (tableExists) {
                 console.log('User table already exists. Skipping creation.');
                 return;
             }
