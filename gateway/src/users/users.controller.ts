@@ -1,4 +1,4 @@
-import { Body, Controller, Param, Post, Put, Get } from '@nestjs/common';
+import { Body, Controller, Param, Post, Put, Get, UseGuards } from '@nestjs/common';
 import { UsersService } from './users.service';
 import {
     ApiTags,
@@ -8,6 +8,7 @@ import {
 } from '@nestjs/swagger';
 import { CreateUserDto } from './dto/create.user.dto';
 import { UpdateUserDto } from './dto/update.user.dto';
+import { JwtguardGuard } from '../jwtguard/jwtguard.guard';
 
 @ApiTags('Users')
 @Controller('users')
@@ -24,6 +25,7 @@ export class UsersController {
         return await this.userService.createUser(body);
     }
 
+    @UseGuards(JwtguardGuard)
     @Put(':id')
     @ApiOperation({ summary: 'Update of an user' })
     // @ApiOkResponse({ type: LoginUserDto })
@@ -34,6 +36,7 @@ export class UsersController {
         return await this.userService.updateUser(id, body);
     }
 
+    @UseGuards(JwtguardGuard)
     @Get(':id')
     @ApiOperation({ summary: 'Get info of an user' })
     // @ApiOkResponse({ type: LoginUserDto })
