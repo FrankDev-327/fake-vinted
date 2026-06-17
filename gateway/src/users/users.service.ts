@@ -4,6 +4,7 @@ import { Logs } from '../loggers/loggers.service';
 import { PromGatewayService } from '../prom-gateway/prom-gateway.service';
 import { AxiosServiceService } from '../axios-service/axios-service.service';
 import { CreateUserDto } from './dto/create.user.dto';
+import { UpdateUserDto } from './dto/update.user.dto';
 
 @Injectable()
 export class UsersService {
@@ -21,10 +22,40 @@ export class UsersService {
             const response = await this.axiosService.post(url, body, headers);
 
             this.promGatewayService.incrementRequestCounter('POST', '/users', 200);
-            return response; // Return the response from the authentication service
+            return response;
         } catch (error) {
             this.promGatewayService.incrementRequestCounter('POST', '/users/', 502);
             this.logs.error(`Error authenticating user: ${(error as Error).message}`, error);
+            throw new BadGatewayException((error as Error).message); //
+        }
+    }
+
+    async updateUser(id: number, body: UpdateUserDto): Promise<any> {
+        try {
+            const url = `${this.configService.get<string>('MS_USER_URL')}/users/${id}`;
+            const headers = { 'Content-Type': 'application/json' };
+            const response = await this.axiosService.put(url, body, headers);
+
+            this.promGatewayService.incrementRequestCounter('PUT', `/users/${id}`, 200);
+            return response;
+        } catch (error) {
+            this.promGatewayService.incrementRequestCounter('PUT', `/users/${id}`, 502);
+            this.logs.error(`Error update user: ${(error as Error).message}`, error);
+            throw new BadGatewayException((error as Error).message); //
+        }
+    }
+
+    async findUserById(id: number): Promise<any> {
+        try {
+            const url = `${this.configService.get<string>('MS_USER_URL')}/users/${id}`;
+            const headers = { 'Content-Type': 'application/json' };
+            const response = await this.axiosService.get(url, headers);
+
+            this.promGatewayService.incrementRequestCounter('GET', `/users/${id}`, 200);
+            return response;
+        } catch (error) {
+            this.promGatewayService.incrementRequestCounter('GET', '/users/', 502);
+            this.logs.error(`Error get details user: ${(error as Error).message}`, error);
             throw new BadGatewayException((error as Error).message); //
         }
     }
