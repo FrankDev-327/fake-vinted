@@ -1,4 +1,4 @@
-import { Injectable, BadGatewayException } from '@nestjs/common';
+import { Injectable, BadGatewayException, NotFoundException } from '@nestjs/common';
 import { CreateListingDto } from './dto/create.listing.dto';
 import { UpdateListingDto } from './dto/update.listing.dto';
 import { PromGatewayService } from '../prom-gateway/prom-gateway.service';
@@ -26,7 +26,11 @@ export class ListingService {
         } catch (error) {
             this.promGatewayService.incrementRequestCounter('POST', '/listing/', 502);
             this.logs.error(`Error creating listing: ${(error as Error).message}`, error);
-            throw new BadGatewayException((error as Error).message); 
+
+            if (error instanceof NotFoundException) {
+                throw new NotFoundException((error as Error).message)
+            }
+            throw new BadGatewayException((error as Error).message);
         }
     }
 
@@ -39,8 +43,12 @@ export class ListingService {
             this.promGatewayService.incrementRequestCounter('PUT', '/listing', 200);
             return response;
         } catch (error) {
+
             this.promGatewayService.incrementRequestCounter('PUT', '/listing/', 502);
             this.logs.error(`Error updating listing: ${(error as Error).message}`, error);
+            if (error instanceof NotFoundException) {
+                throw new NotFoundException((error as Error).message)
+            }
             throw new BadGatewayException((error as Error).message); //
         }
     }
@@ -56,6 +64,10 @@ export class ListingService {
         } catch (error) {
             this.promGatewayService.incrementRequestCounter('GET', '/listing/', 502);
             this.logs.error(`Error getting all listing: ${(error as Error).message}`, error);
+
+            if (error instanceof NotFoundException) {
+                throw new NotFoundException((error as Error).message)
+            }
             throw new BadGatewayException((error as Error).message); //
         }
     }
@@ -71,6 +83,10 @@ export class ListingService {
         } catch (error) {
             this.promGatewayService.incrementRequestCounter('GET', `/listing/${user_id}`, 502);
             this.logs.error(`Error getting all listing by user id: ${(error as Error).message}`, error);
+
+            if (error instanceof NotFoundException) {
+                throw new NotFoundException((error as Error).message)
+            }
             throw new BadGatewayException((error as Error).message); //
         }
     }
@@ -86,6 +102,11 @@ export class ListingService {
         } catch (error) {
             this.promGatewayService.incrementRequestCounter('DEL', `/listing/${id}`, 502);
             this.logs.error(`Error deleting listing by id: ${(error as Error).message}`, error);
+
+            if (error instanceof NotFoundException) {
+                throw new NotFoundException((error as Error).message)
+            }
+
             throw new BadGatewayException((error as Error).message); //
         }
     }

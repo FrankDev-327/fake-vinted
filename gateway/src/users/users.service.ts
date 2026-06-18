@@ -1,4 +1,4 @@
-import { Injectable, BadGatewayException } from '@nestjs/common';
+import { Injectable, BadGatewayException, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Logs } from '../loggers/loggers.service';
 import { PromGatewayService } from '../prom-gateway/prom-gateway.service';
@@ -26,6 +26,10 @@ export class UsersService {
         } catch (error) {
             this.promGatewayService.incrementRequestCounter('POST', '/users/', 502);
             this.logs.error(`Error authenticating user: ${(error as Error).message}`, error);
+
+            if (error instanceof NotFoundException) {
+                throw new NotFoundException((error as Error).message)
+            }
             throw new BadGatewayException((error as Error).message); //
         }
     }
@@ -41,6 +45,10 @@ export class UsersService {
         } catch (error) {
             this.promGatewayService.incrementRequestCounter('PUT', `/users/${id}`, 502);
             this.logs.error(`Error update user: ${(error as Error).message}`, error);
+
+            if (error instanceof NotFoundException) {
+                throw new NotFoundException((error as Error).message)
+            }
             throw new BadGatewayException((error as Error).message); //
         }
     }
@@ -56,6 +64,10 @@ export class UsersService {
         } catch (error) {
             this.promGatewayService.incrementRequestCounter('GET', '/users/', 502);
             this.logs.error(`Error get details user: ${(error as Error).message}`, error);
+
+            if (error instanceof NotFoundException) {
+                throw new NotFoundException((error as Error).message)
+            }
             throw new BadGatewayException((error as Error).message); //
         }
     }

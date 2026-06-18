@@ -1,4 +1,4 @@
-import { BadGatewayException, Injectable } from '@nestjs/common';
+import { BadGatewayException, Injectable, NotFoundException } from '@nestjs/common';
 import { CreateConversationDto } from './dto/create.convsersation.dto';
 import { PromGatewayService } from '../prom-gateway/prom-gateway.service';
 import { AxiosServiceService } from '../axios-service/axios-service.service';
@@ -25,6 +25,10 @@ export class ChatVintedService {
         } catch (error) {
             this.promGatewayService.incrementRequestCounter('POST', '/chat/conversations', 502);
             this.logs.error(`Error creating conversation: ${(error as Error).message}`, error);
+
+            if (error instanceof NotFoundException) {
+                throw new NotFoundException((error as Error).message)
+            }
             throw new BadGatewayException((error as Error).message);
         }
     }
@@ -40,6 +44,10 @@ export class ChatVintedService {
         } catch (error) {
             this.promGatewayService.incrementRequestCounter('GET', `/chat/conversations/${user_id}`, 502);
             this.logs.error(`Error getting conversation: ${(error as Error).message}`, error);
+
+            if (error instanceof NotFoundException) {
+                throw new NotFoundException((error as Error).message)
+            }
             throw new BadGatewayException((error as Error).message);
         }
     }
@@ -55,6 +63,10 @@ export class ChatVintedService {
         } catch (error) {
             this.promGatewayService.incrementRequestCounter('GET', `/chat/conversations/${conversationId}/messages`, 502);
             this.logs.error(`Error getting conversation: ${(error as Error).message}`, error);
+
+            if (error instanceof NotFoundException) {
+                throw new NotFoundException((error as Error).message)
+            }
             throw new BadGatewayException((error as Error).message);
         }
     }
@@ -70,6 +82,10 @@ export class ChatVintedService {
         } catch (error) {
             this.promGatewayService.incrementRequestCounter('PATCH', `/chat/conversations/${conversationId}/read/${user_id}`, 502);
             this.logs.error(`Error getting conversation: ${(error as Error).message}`, error);
+
+            if (error instanceof NotFoundException) {
+                throw new NotFoundException((error as Error).message)
+            }
             throw new BadGatewayException((error as Error).message);
         }
     }
