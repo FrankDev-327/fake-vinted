@@ -14,13 +14,12 @@ import { JwtModule } from '@nestjs/jwt';
   imports: [ConfigModule.forRoot({
     isGlobal: true,
   }),
-  JwtModule.registerAsync({
-    global: true, // add this
-    imports: [ConfigModule],
-    useFactory: (configService: ConfigService) => ({
-      secret: configService.get<string>('KEY_SECRET'),
-    }),
-    inject: [ConfigService],
+  JwtModule.register({
+    global: true,
+    secret: process.env.KEY_SECRET,
+    signOptions: {
+      expiresIn: '15m',
+    },
   }),
     AuthModule,
     UsersModule,

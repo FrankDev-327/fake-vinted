@@ -44,4 +44,49 @@ export class ListingService {
             throw new BadGatewayException((error as Error).message); //
         }
     }
+
+    async findAll(): Promise<any> {
+        try {
+            const url = `${this.configService.get<string>('MS_LISTING_URL')}/glossaries`;
+            const headers = { 'Content-Type': 'application/json' };
+            const response = await this.axiosService.get(url, headers);
+
+            this.promGatewayService.incrementRequestCounter('GET', '/listing', 200);
+            return response;
+        } catch (error) {
+            this.promGatewayService.incrementRequestCounter('GET', '/listing/', 502);
+            this.logs.error(`Error getting all listing: ${(error as Error).message}`, error);
+            throw new BadGatewayException((error as Error).message); //
+        }
+    }
+
+    async findByUserId(user_id: number): Promise<any> {
+        try {
+            const url = `${this.configService.get<string>('MS_LISTING_URL')}/glossaries/user/${user_id}`;
+            const headers = { 'Content-Type': 'application/json' };
+            const response = await this.axiosService.get(url, headers);
+
+            this.promGatewayService.incrementRequestCounter('GET', `/listing/${user_id}`, 200);
+            return response;
+        } catch (error) {
+            this.promGatewayService.incrementRequestCounter('GET', `/listing/${user_id}`, 502);
+            this.logs.error(`Error getting all listing by user id: ${(error as Error).message}`, error);
+            throw new BadGatewayException((error as Error).message); //
+        }
+    }
+
+    async deleteListing(id: number): Promise<any> {
+        try {
+            const url = `${this.configService.get<string>('MS_LISTING_URL')}/glossaries/${id}`;
+            const headers = { 'Content-Type': 'application/json' };
+            const response = await this.axiosService.delete(url, headers);
+
+            this.promGatewayService.incrementRequestCounter('DEL', `/listing/${id}`, 200);
+            return response;
+        } catch (error) {
+            this.promGatewayService.incrementRequestCounter('DEL', `/listing/${id}`, 502);
+            this.logs.error(`Error deleting listing by id: ${(error as Error).message}`, error);
+            throw new BadGatewayException((error as Error).message); //
+        }
+    }
 }

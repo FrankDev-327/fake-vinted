@@ -53,14 +53,40 @@ export class GlossariesService {
     }
 
     async findAll(): Promise<ListingEntity[]> {
-        return;
+        try {
+            return await this.listingRepository.find({
+                order: { created_at: 'DESC' }
+            });
+        } catch (error) {
+            this.logService.error(`Error finding listings: ${(error as Error).message}`);
+            throw new BadGatewayException((error as Error).message);
+        }
     }
 
     async findByUserId(userId: number): Promise<ListingEntity[]> {
-        return;
+        try {
+            return await this.listingRepository.findBy({ user_id: userId });
+        } catch (error) {
+            this.logService.error(`Error finding listings by user: ${(error as Error).message}`);
+            throw new BadGatewayException((error as Error).message);
+        }
     }
 
     async deleteListing(id: number): Promise<void> {
-        return;
+        try {
+            const listing = await this.listingRepository.findOneBy({ id });
+            if (!listing) {
+                throw new NotFoundException('Listing not found');
+            }
+            
+            await this.listingRepository.delete(id);
+        } catch (error) {
+            if (error instanceof NotFoundException) {
+                throw new NotFoundException((error as Error).message);
+            }
+
+            this.logService.error(`Error deleting listing: ${(error as Error).message}`);
+            throw new BadGatewayException((error as Error).message);
+        }
     }
 }

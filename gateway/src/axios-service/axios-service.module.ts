@@ -1,5 +1,6 @@
 import { Module, Global } from '@nestjs/common';
 import { HttpModule } from '@nestjs/axios';
+import { Logs } from '../loggers/loggers.service';
 import { AxiosServiceService } from './axios-service.service';
 
 @Global()
@@ -8,7 +9,10 @@ import { AxiosServiceService } from './axios-service.service';
     timeout: 5000,
     maxRedirects: 5,
   })],
-  providers: [AxiosServiceService],
-  exports: [AxiosServiceService], 
+  providers: [AxiosServiceService, {
+    provide: Logs,
+    useValue: new Logs(AxiosServiceService.name)
+  }],
+  exports: [AxiosServiceService],
 })
-export class AxiosServiceModule {}
+export class AxiosServiceModule { }

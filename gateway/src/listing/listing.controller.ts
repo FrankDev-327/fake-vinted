@@ -1,4 +1,4 @@
-import { Body, Controller, Param, Post, Put, Get, UseGuards } from '@nestjs/common';
+import { Body, Controller, Param, Post, Put, Get, UseGuards, Delete } from '@nestjs/common';
 import {
     ApiTags,
     ApiBadRequestResponse,
@@ -15,7 +15,7 @@ import { JwtguardGuard } from '../jwtguard/jwtguard.guard';
 export class ListingController {
     constructor(private readonly listingService: ListingService) { }
 
-    //@UseGuards(JwtguardGuard)
+    @UseGuards(JwtguardGuard)
     @Post()
     @ApiOperation({ summary: 'Create a listing for a user' })
     // @ApiOkResponse({ type: LoginUserDto })
@@ -26,8 +26,8 @@ export class ListingController {
         return await this.listingService.createListing(body);
     }
 
-    //@UseGuards(JwtguardGuard)
-    @Post()
+    @UseGuards(JwtguardGuard)
+    @Put()
     @ApiOperation({ summary: 'Update a listing for a user' })
     // @ApiOkResponse({ type: LoginUserDto })
     @ApiBadRequestResponse({
@@ -35,5 +35,38 @@ export class ListingController {
     })
     async updateListing(@Param('id') id: number, @Body() body: UpdateListingDto): Promise<any> {
         return await this.listingService.updateListing(id, body);
+    }
+
+    @UseGuards(JwtguardGuard)
+    @Get()
+    @ApiOperation({ summary: 'Getting of a  listing for a user' })
+    // @ApiOkResponse({ type: LoginUserDto })
+    @ApiBadRequestResponse({
+        description: 'Error getting listing.',
+    })
+    async findAll(): Promise<any[]> {
+        return await this.listingService.findAll();
+    }
+
+    @UseGuards(JwtguardGuard)
+    @Get('/user/:user_id')
+    @ApiOperation({ summary: 'Getting listing by user id' })
+    // @ApiOkResponse({ type: LoginUserDto })
+    @ApiBadRequestResponse({
+        description: 'Error updating listing.',
+    })
+    async findByUserId(@Param('user_id') user_id: number): Promise<any[]> {
+        return await this.listingService.findByUserId(user_id);
+    }
+
+    @UseGuards(JwtguardGuard)
+    @Delete(':id')
+    @ApiOperation({ summary: 'Delete a listing for a user' })
+    // @ApiOkResponse({ type: LoginUserDto })
+    @ApiBadRequestResponse({
+        description: 'Error deleting listing.',
+    })
+    async deleteListing(@Param('id') id: number): Promise<any> {
+        return await this.listingService.deleteListing(id);
     }
 }

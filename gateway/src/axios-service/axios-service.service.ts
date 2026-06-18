@@ -43,4 +43,16 @@ export class AxiosServiceService {
             throw new BadGatewayException();
         }
     }
+
+    async delete(url: string, headers?: Record<string, string>): Promise<any> {
+        try {
+            const { data: responseData } = await firstValueFrom(
+                this.httpService.delete(url, { headers })
+            );
+            return responseData;
+        } catch (error) {
+            this.logs.error(`Error in DEL request to ${url}: ${(error as Error).message}`, error);
+            throw new BadGatewayException();
+        }
+    }
 }

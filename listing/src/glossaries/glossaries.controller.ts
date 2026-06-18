@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Put, Param } from '@nestjs/common';
+import { Controller, Post, Body, Put, Param, Get, Delete } from '@nestjs/common';
 import { GlossariesService } from './glossaries.service';
 import { CreateListingDto } from './dto/create.glossary.dto';
 import { UpdateListingDto } from './dto/update.glossary.dto';
@@ -16,5 +16,20 @@ export class GlossariesController {
     @Put(':id')
     async updateListing(@Param('id') id: number, @Body() body: UpdateListingDto): Promise<ListingEntity> {
         return await this.glossaryService.updateListing(id, body);
+    }
+
+    @Get()
+    async findAll(): Promise<ListingEntity[]> {
+        return await this.glossaryService.findAll();
+    }
+
+    @Get('user/:user_id')
+    async findByUserId(@Param('user_id') user_id: number): Promise<ListingEntity[]> {
+        return await this.glossaryService.findByUserId(user_id);
+    }
+
+    @Delete(':id')
+    async deleteListing(@Param('id') id: number): Promise<void> {
+        return await this.glossaryService.deleteListing(id);
     }
 }
