@@ -37,6 +37,21 @@ listing/.prettier*
 listing/.prettiercache
 #listing services
 
+#chat_vinted services
+chat_vinted/node_modules
+chat_vinted/dist
+chat_vinted/.env
+chat_vinted/.vscode
+chat_vinted/coverage
+chat_vinted/build
+chat_vinted/.cache
+chat_vinted/logs
+chat_vinted/.eslintrc*
+chat_vinted/.prettier*
+chat_vinted/.prettiercache
+#chat_vinted services
+
+
 user_data
 gateway_data
 n8n_data
