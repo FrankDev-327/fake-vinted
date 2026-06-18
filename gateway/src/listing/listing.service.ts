@@ -26,7 +26,7 @@ export class ListingService {
         } catch (error) {
             this.promGatewayService.incrementRequestCounter('POST', '/listing/', 502);
             this.logs.error(`Error creating listing: ${(error as Error).message}`, error);
-            throw new BadGatewayException((error as Error).message); //
+            throw new BadGatewayException((error as Error).message); 
         }
     }
 

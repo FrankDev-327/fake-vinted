@@ -1,9 +1,14 @@
 import { Module } from '@nestjs/common';
-import { ChatService } from '../chat/chat.service';
+import { ChatModule } from '../chat/chat.module';
 import { ChatgatewayGateway } from './chatgateway.gateway';
+import { ConfigModule } from '@nestjs/config';
 
 @Module({
-    providers:[ChatService, ChatgatewayGateway],
-    exports:[ChatService]
+    imports: [
+        ConfigModule.forRoot({ isGlobal: true }),
+        ChatModule
+    ],
+    providers: [ChatgatewayGateway],
+    exports: []
 })
-export class ChatgatewayModule {}
+export class ChatgatewayModule { }

@@ -9,6 +9,7 @@ import { PromGatewayService } from './prom-gateway/prom-gateway.service';
 import { PromGatewayModule } from './prom-gateway/prom-gateway.module';
 import { ListingModule } from './listing/listing.module';
 import { JwtModule } from '@nestjs/jwt';
+import { ChatVintedModule } from './chat_vinted/chat_vinted.module';
 
 @Module({
   imports: [ConfigModule.forRoot({
@@ -27,7 +28,8 @@ import { JwtModule } from '@nestjs/jwt';
     AxiosServiceModule,
     LoggersModule,
     PromGatewayModule,
-    ListingModule
+    ListingModule,
+    ChatVintedModule
   ],
   controllers: [],
   providers: [PromGatewayService],

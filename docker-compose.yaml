@@ -13,6 +13,7 @@ services:
     networks:
       - gateway_network
       - users_network
+      - chat_network
       - listing_network
     volumes:
       - ./gateway_data:/app
@@ -59,6 +60,25 @@ services:
       - ./listing_data:/app
     restart: unless-stopped
 
+  chat_vinted:
+    container_name: ms_chat
+    build:
+      context: ./chat_vinted
+      dockerfile: Dockerfile
+    ports:
+      - "4002:4002"
+    depends_on:
+      db:
+        condition: service_healthy
+    env_file:
+      - ./chat_vinted/.env
+    networks:
+      - chat_network
+      - gateway_network
+      - db_network
+    volumes:
+      - ./chat_data:/app
+    restart: unless-stopped
 
   # alloy:
   #   image: grafana/alloy:latest
@@ -234,8 +254,11 @@ volumes:
   gateway_data:
   users_data:
   listing_data:
+  chat_data:
 
 networks:
+  chat_network:
+    driver: bridge
   listing_network:
     driver: bridge
   gateway_network:
