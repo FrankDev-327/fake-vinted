@@ -15,15 +15,15 @@ export class PromGatewayService {
         });
     }
 
-    async incrementRequestCounter(method: string, endpoint: string, statusCode: number) {
+    incrementRequestCounter(method: string, endpoint: string, statusCode: number): void {
         requestCounter.inc({ method, endpoint, status_code: statusCode });
     }
 
-    async observeRequestDuration(method: string, endpoint: string, statusCode: number, durationInSeconds: number) {
+    observeRequestDuration(method: string, endpoint: string, statusCode: number, durationInSeconds: number): void {
         requestDurationHistogram.observe({ method, endpoint, status_code: statusCode }, durationInSeconds);
     }
 
-    async getMetrics() {
+    async getMetrics(): Promise<string>  {
         return this.client.metrics();
     }
 }

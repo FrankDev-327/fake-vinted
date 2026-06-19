@@ -33,6 +33,9 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('/vinted/docs', app, document);
 
-  await app.listen(port);
+  await app.listen(port, () => {
+    logger.log(`Server starting at port: ${port}`);
+  });
 }
+
 bootstrap();

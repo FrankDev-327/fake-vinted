@@ -49,7 +49,7 @@ export class ListingService {
             if (error instanceof NotFoundException) {
                 throw new NotFoundException((error as Error).message)
             }
-            throw new BadGatewayException((error as Error).message); //
+            throw new BadGatewayException((error as Error).message);
         }
     }
 

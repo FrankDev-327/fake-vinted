@@ -7,14 +7,11 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { UpdateUserDto } from './dto/users/update.user.dto';
 import { comparePasswords } from '../utils/generic';
 import { AuthUserDto } from './dto/users/auth.user.dto';
-import { JwtService } from '@nestjs/jwt';
-import { LoginUserDto } from './users/auth.user.token.dto';
 
 @Injectable()
 export class UsersService {
     constructor(
         private readonly logsService: LogsService,
-        private jwtService: JwtService,
         @InjectRepository(UserEntity) private readonly userRepository: Repository<UserEntity>
     ) { }
 
@@ -27,7 +24,7 @@ export class UsersService {
 
             const user = this.userRepository.create(createUserDto);
             const userSaved = await this.userRepository.save(user);
-            delete userSaved.password; // Remove password from the returned user object
+            delete userSaved.password;
             return userSaved;
         } catch (error) {
             if (error instanceof ConflictException || error instanceof NotFoundException) {
@@ -39,7 +36,7 @@ export class UsersService {
         }
     }
 
-    async authenticateUser(authUserDto: AuthUserDto): Promise<LoginUserDto> { 
+    async authenticateUser(authUserDto: AuthUserDto): Promise<UserEntity> {
         try {
             const user = await this.userRepository.findOneBy({ username: authUserDto.username });
             if (!user) {
@@ -51,13 +48,9 @@ export class UsersService {
                 throw new UnauthorizedException('Invalid credentials');
             }
 
-            delete user.password; // Remove password from the returned user object
-            return {
-                access_token: this.jwtService.sign({
-                    username: user.username,
-                    id: user.id,
-                })
-            };
+            
+            delete user.password;
+            return user;
         } catch (error) {
             this.logsService.error(`Error authenticating user: ${(error as Error).message}`);
             throw new BadGatewayException('Error authenticating user');
@@ -73,7 +66,7 @@ export class UsersService {
 
             await this.userRepository.update(id, updateUserDto);
             const updatedUser = await this.userRepository.findOneBy({ id });
-            delete updatedUser.password; // Remove password from the returned user object
+            delete updatedUser.password;
             return updatedUser;
         } catch (error) {
             if (error instanceof ConflictException || error instanceof NotFoundException) {

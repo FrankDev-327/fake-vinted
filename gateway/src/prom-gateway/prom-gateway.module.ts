@@ -1,8 +1,10 @@
 import { Global, Module } from '@nestjs/common';
 import { PromGatewayService } from './prom-gateway.service';
+import { PromGatewayController } from './prom-gateway.controller';
 @Global()
 @Module({
     exports: [PromGatewayService],
-    providers: [PromGatewayService]
+    providers: [PromGatewayService],
+    controllers: [PromGatewayController]
 })
 export class PromGatewayModule { }
