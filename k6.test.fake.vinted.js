@@ -149,10 +149,11 @@ export function httpTest(data) {
     'Content-Type': 'application/json',
     Authorization: `Bearer ${data.token}`,
   };
+  let createListingRes, listingId;
 
   // 1. create a listing
   group('testing creating a listing', function () {
-    const createListingRes = http.post(
+    createListingRes = http.post(
       `${BASE_URL}/listing`,
       JSON.stringify({
         user_id: data.userId,
@@ -184,7 +185,7 @@ export function httpTest(data) {
 
   // 3. get listing by id
   group('testing gettin details of lising', function () {
-    const listingId = JSON.parse(createListingRes.body)?.id;
+    listingId = JSON.parse(createListingRes.body)?.id;
     if (listingId) {
       const getListingRes = http.get(`${BASE_URL}/listing/${listingId}`, { headers });
       check(getListingRes, { 'got listing by id': (r) => r.status === 200 });
