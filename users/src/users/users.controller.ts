@@ -1,9 +1,9 @@
-import { Body, Controller, Get, Param, Post, Put, Query } from '@nestjs/common';
 import { CreateUserDto } from './dto/users/create.user.dto';
 import { UsersService } from './users.service';
 import { UserEntity } from '../entities/user.entity';
 import { UpdateUserDto } from './dto/users/update.user.dto';
 import { AuthUserDto } from './dto/users/auth.user.dto';
+import { Body, Controller, Get, Param, Post, Put, Delete } from '@nestjs/common';
 
 @Controller('users')
 export class UsersController {
@@ -25,7 +25,12 @@ export class UsersController {
     }
 
     @Post('/authenticate')
-    async authenticateUser(@Body() authUserDto: AuthUserDto): Promise<UserEntity> { 
+    async authenticateUser(@Body() authUserDto: AuthUserDto): Promise<UserEntity> {
         return await this.usersService.authenticateUser(authUserDto);
+    }
+
+    @Delete('truncate')
+    async truncateUsersTable(): Promise<void> {
+        return await this.usersService.truncateUsersTable();
     }
 }

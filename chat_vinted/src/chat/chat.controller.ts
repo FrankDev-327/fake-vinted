@@ -1,4 +1,4 @@
-import { Controller, Post, Get, Body, Param, Patch } from '@nestjs/common';
+import { Controller, Post, Get, Body, Param, Patch, Delete } from '@nestjs/common';
 import { ChatService } from './chat.service';
 import { CreateConversationDto } from '../chatgateway/dto/create.convsersation.dto';
 @Controller('chat')
@@ -26,5 +26,10 @@ export class ChatController {
         @Param('userId') userId: number,
     ) {
         return await this.chatService.markAsRead(conversationId, userId);
+    }
+
+    @Delete('truncate')
+    async truncateMessagesTableAndConversations(): Promise<void> {
+        await this.chatService.truncateMessagesTableAndConversations()
     }
 }

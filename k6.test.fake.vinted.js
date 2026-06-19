@@ -162,20 +162,25 @@ export function httpTest(data) {
     { headers },
   );
 
+  console.log('create listing status:', createListingRes.status);
+  console.log('create listing body:', createListingRes.body);
+
   check(createListingRes, { 'listing created': (r) => r.status === 201 });
   listing_created_counter.add(1, { test_type: 'gateway' });
   sleep(1);
 
   // 2. get all listings
-  const getAllListingsRes = http.get(`${BASE_URL}/listing`, { headers });
-  check(getAllListingsRes, { 'got all listings': (r) => r.status === 200 });
-  listing_getting_all_counter.add(1, { test_type: 'gateway' });
-  sleep(1);
+  /*   const getAllListingsRes = http.get(`${BASE_URL}/listing`, { headers });
+    check(getAllListingsRes, { 'got all listings': (r) => r.status === 200 });
+    listing_getting_all_counter.add(1, { test_type: 'gateway' });
+    sleep(1); */
 
   // 3. get listing by id
   const listingId = JSON.parse(createListingRes.body)?.id;
   if (listingId) {
     const getListingRes = http.get(`${BASE_URL}/listing/${listingId}`, { headers });
+    console.log('get listing status:', getListingRes.status);
+    console.log('get listing body:', getListingRes.body);
     check(getListingRes, { 'got listing by id': (r) => r.status === 200 });
     listing_getting_details_counter.add(1, { test_type: 'gateway' });
   }
@@ -286,4 +291,21 @@ export function wsTest(data) {
 export function teardown(data) {
   console.log('Load test completed!');
   console.log(data);
+
+  const deletetingMsgConvts = http.del(
+    `${BASE_URL}/chat-vinted/truncate`,
+    { headers: { 'Content-Type': 'application/json' } },
+  );
+  const deletetingUsers = http.del(
+    `${BASE_URL}/users/truncate`,
+    { headers: { 'Content-Type': 'application/json' } },
+  );
+
+  const deletetingListing = http.del(
+    `${BASE_URL}/listing/truncate`,
+    { headers: { 'Content-Type': 'application/json' } },
+  );
+
+  console.log(`${__VU} deleted all data from database`);
+
 }

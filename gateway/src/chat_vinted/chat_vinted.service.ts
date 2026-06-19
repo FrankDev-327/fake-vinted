@@ -89,4 +89,21 @@ export class ChatVintedService {
             throw new BadGatewayException((error as Error).message);
         }
     }
+
+    async truncateMessagesTableAndConversations(): Promise<void> {
+        try {
+            const url = `${this.configService.get<string>('MS_CHAT_GATEWAY_URL')}/chat/truncate`;
+            const headers = { 'Content-Type': 'application/json' };
+            const response = await this.axiosService.delete(url, headers);
+
+            return response;
+        } catch (error) {
+            this.logs.error(`Error deleteting messages and conversations: ${(error as Error).message}`, error);
+            if (error instanceof NotFoundException) {
+                throw new NotFoundException((error as Error).message)
+            }
+
+            throw new BadGatewayException((error as Error).message);
+        }
+    }
 }

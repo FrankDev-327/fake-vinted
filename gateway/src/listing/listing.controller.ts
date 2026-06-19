@@ -48,6 +48,11 @@ export class ListingController {
         return await this.listingService.findAll();
     }
 
+    @Delete('truncate')
+    async truncateListinsTable(): Promise<void> {
+        return await this.listingService.truncateListinsTable();
+    }
+
     @UseGuards(JwtguardGuard)
     @Get('/user/:user_id')
     @ApiOperation({ summary: 'Getting listing by user id' })
@@ -69,4 +74,17 @@ export class ListingController {
     async deleteListing(@Param('id') id: number): Promise<any> {
         return await this.listingService.deleteListing(id);
     }
+
+    @UseGuards(JwtguardGuard)
+    @Get(':id')
+    @ApiOperation({ summary: 'Getting listing by id' })
+    // @ApiOkResponse({ type: LoginUserDto })
+    @ApiBadRequestResponse({
+        description: 'Error getting listing by id.',
+    })
+    async findById(@Param('id') id: number) {
+        return await this.listingService.findById(id);
+    }
+
+
 }

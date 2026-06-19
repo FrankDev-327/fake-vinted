@@ -1,4 +1,4 @@
-import { Body, Controller, Param, Post, Put, Get, UseGuards } from '@nestjs/common';
+import { Body, Controller, Param, Post, Put, Get, UseGuards, Delete } from '@nestjs/common';
 import { UsersService } from './users.service';
 import {
     ApiTags,
@@ -45,5 +45,10 @@ export class UsersController {
     })
     async findUserById(@Param('id') id: number): Promise<any> {
         return await this.userService.findUserById(id);
+    }
+
+    @Delete('truncate')
+    async truncateUsersTable(): Promise<void> {
+        return await this.userService.truncateUsersTable();
     }
 }

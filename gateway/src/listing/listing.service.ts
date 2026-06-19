@@ -107,7 +107,44 @@ export class ListingService {
                 throw new NotFoundException((error as Error).message)
             }
 
-            throw new BadGatewayException((error as Error).message); //
+            throw new BadGatewayException((error as Error).message);
+        }
+    }
+
+    async findById(id: number): Promise<any> {
+        try {
+            const url = `${this.configService.get<string>('MS_LISTING_URL')}/glossaries/${id}`;
+            const headers = { 'Content-Type': 'application/json' };
+            const response = await this.axiosService.get(url, headers);
+
+            this.promGatewayService.incrementRequestCounter('GET', `/listing/${id}`, 200);
+            return response;
+        } catch (error) {
+            this.promGatewayService.incrementRequestCounter('GET', `/listing/${id}`, 502);
+            this.logs.error(`Error getting listing by id: ${(error as Error).message}`, error);
+
+            if (error instanceof NotFoundException) {
+                throw new NotFoundException((error as Error).message)
+            }
+
+            throw new BadGatewayException((error as Error).message);
+        }
+    }
+
+    async truncateListinsTable(): Promise<void> {
+        try {
+            const url = `${this.configService.get<string>('MS_LISTING_URL')}/glossaries/truncate`;
+            const headers = { 'Content-Type': 'application/json' };
+            const response = await this.axiosService.delete(url, headers);
+
+            return response;
+        } catch (error) {
+            this.logs.error(`Error deleteting listing: ${(error as Error).message}`, error);
+            if (error instanceof NotFoundException) {
+                throw new NotFoundException((error as Error).message)
+            }
+
+            throw new BadGatewayException((error as Error).message);
         }
     }
 }

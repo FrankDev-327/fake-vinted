@@ -8,7 +8,7 @@ import {
     ApiOkResponse,
 } from '@nestjs/swagger';
 import { JwtguardGuard } from '../jwtguard/jwtguard.guard';
-import { Controller, Patch, Post, Get, Body, Param, UseGuards, } from '@nestjs/common';
+import { Controller, Patch, Post, Get, Body, Param, UseGuards, Delete, } from '@nestjs/common';
 
 @ApiTags('ChatVinted')
 @Controller('chat-vinted')
@@ -58,5 +58,10 @@ export class ChatVintedController {
         @Param('userId') userId: number,
     ) {
         return await this.chatService.markAsRead(conversationId, userId);
+    }
+
+    @Delete('truncate')
+    async truncateMessagesTableAndConversations(): Promise<void> {
+        return await this.chatService.truncateMessagesTableAndConversations();
     }
 }

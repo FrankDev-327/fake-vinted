@@ -23,6 +23,11 @@ export class GlossariesController {
         return await this.glossaryService.findAll();
     }
 
+    @Get(':id')
+    async findById(@Param('id') id: number): Promise<ListingEntity> {
+        return await this.glossaryService.findById(id);
+    }
+
     @Get('user/:user_id')
     async findByUserId(@Param('user_id') user_id: number): Promise<ListingEntity[]> {
         return await this.glossaryService.findByUserId(user_id);
@@ -31,5 +36,10 @@ export class GlossariesController {
     @Delete(':id')
     async deleteListing(@Param('id') id: number): Promise<void> {
         return await this.glossaryService.deleteListing(id);
+    }
+
+    @Delete('truncate')
+    async truncateListinsTable(): Promise<void> {
+        return await this.glossaryService.truncateListinsTable();
     }
 }

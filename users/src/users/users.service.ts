@@ -48,7 +48,7 @@ export class UsersService {
                 throw new UnauthorizedException('Invalid credentials');
             }
 
-            
+
             delete user.password;
             return user;
         } catch (error) {
@@ -93,6 +93,15 @@ export class UsersService {
         } catch (error) {
             this.logsService.error(`Error finding user by id: ${(error as Error).message}`);
             throw new BadGatewayException('Error finding user by id');
+        }
+    }
+
+    async truncateUsersTable(): Promise<void> {
+        try {
+            await this.userRepository.deleteAll();
+        } catch (error) {
+            this.logsService.error(`Error deleting users table: ${(error as Error).message}`);
+            throw new BadGatewayException('Error deleting users table');
         }
     }
 }

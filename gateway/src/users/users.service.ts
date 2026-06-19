@@ -68,7 +68,23 @@ export class UsersService {
             if (error instanceof NotFoundException) {
                 throw new NotFoundException((error as Error).message)
             }
-            throw new BadGatewayException((error as Error).message); //
+            throw new BadGatewayException((error as Error).message);
+        }
+    }
+
+    async truncateUsersTable(): Promise<void> {
+        try {
+            const url = `${this.configService.get<string>('MS_USER_URL')}/users/truncate`;
+            const headers = { 'Content-Type': 'application/json' };
+            const response = await this.axiosService.delete(url, headers);
+            return response;
+        } catch (error) {
+            this.logs.error(`Error deleting users table: ${(error as Error).message}`, error);
+            if (error instanceof NotFoundException) {
+                throw new NotFoundException((error as Error).message)
+            }
+
+            throw new BadGatewayException((error as Error).message);
         }
     }
 }

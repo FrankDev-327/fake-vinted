@@ -80,4 +80,15 @@ export class ChatService {
         }
     }
 
+    async truncateMessagesTableAndConversations(): Promise<void> {
+        try {
+            await Promise.all([
+                await this.messageRepository.deleteAll(),
+                await this.conversationRepository.deleteAll()
+            ]);
+        } catch (error) {
+            throw new BadGatewayException((error as Error).message);
+        }
+    }
+
 }

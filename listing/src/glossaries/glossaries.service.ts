@@ -78,8 +78,21 @@ export class GlossariesService {
             if (!listing) {
                 throw new NotFoundException('Listing not found');
             }
-            
+
             await this.listingRepository.delete(id);
+        } catch (error) {
+            if (error instanceof NotFoundException) {
+                throw new NotFoundException((error as Error).message);
+            }
+
+            this.logService.error(`Error deleting listing: ${(error as Error).message}`);
+            throw new BadGatewayException((error as Error).message);
+        }
+    }
+
+    async truncateListinsTable(): Promise<void> {
+        try {   
+            await this.listingRepository.deleteAll();
         } catch (error) {
             if (error instanceof NotFoundException) {
                 throw new NotFoundException((error as Error).message);
