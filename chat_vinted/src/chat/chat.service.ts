@@ -5,6 +5,7 @@ import { MessageEntity } from '../entities/messages.entity';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { ConversationEntity } from '../entities/conversations.entity';
+import { WsException } from '@nestjs/websockets';
 @Injectable()
 export class ChatService {
     constructor(
@@ -35,16 +36,14 @@ export class ChatService {
             const conversation = await this.conversationRepository.findOneBy({
                 id: dto.conversation_id,
             });
-
             if (!conversation) {
-                throw new NotFoundException('Conversation not found');
+                throw new WsException('Conversation not found');
             }
-
             const message = this.messageRepository.create(dto);
             return await this.messageRepository.save(message);
         } catch (error) {
-            if (error instanceof NotFoundException) throw new NotFoundException((error as Error).message);
-            throw new BadGatewayException((error as Error).message);
+            if (error instanceof WsException) throw error;
+            throw new WsException((error as Error).message);
         }
     }
 
