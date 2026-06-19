@@ -139,6 +139,8 @@ export class ListingService {
 
             return response;
         } catch (error) {
+            console.log(error);
+
             this.logs.error(`Error deleteting listing: ${(error as Error).message}`, error);
             if (error instanceof NotFoundException) {
                 throw new NotFoundException((error as Error).message)

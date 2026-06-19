@@ -80,32 +80,32 @@ services:
       - ./chat_data:/app
     restart: unless-stopped
 
-  # alloy:
-  #   image: grafana/alloy:latest
-  #   container_name: alloy
-  #   user: root
-  #   volumes:
-  #     - ./alloy/:/etc/alloy/
-  #     - /var/run/docker.sock:/var/run/docker.sock
-  #     - /:/rootfs:ro
-  #     - /var/run:/var/run:rw
-  #     - /sys:/sys:ro
-  #     - /var/lib/docker/:/var/lib/docker:ro
-  #     - /dev/disk/:/dev/disk:ro
-  #   networks:
-  #     - grafana
-  #     - db_network
-  #   restart: unless-stopped
-  #   command: run --server.http.listen-addr=0.0.0.0:12345 --storage.path=/var/lib/alloy/data /etc/alloy/config.alloy
-  #   env_file:
-  #     - ./.env
-  #   ports:
-  #     - "12345:12345"
-  #     - "4317:4317"
-  #     - "4318:4318"
-  #   depends_on:
-  #     - loki
-  #     - prometheus
+  alloy:
+    image: grafana/alloy:latest
+    container_name: alloy
+    user: root
+    volumes:
+      - ./alloy/:/etc/alloy/
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /:/rootfs:ro
+      - /var/run:/var/run:rw
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /dev/disk/:/dev/disk:ro
+    networks:
+      - grafana
+      - db_network
+    restart: unless-stopped
+    command: run --server.http.listen-addr=0.0.0.0:12345 --storage.path=/var/lib/alloy/data /etc/alloy/config.alloy
+    env_file:
+      - ./.env
+    ports:
+      - "12345:12345"
+      - "4317:4317"
+      - "4318:4318"
+    depends_on:
+      - loki
+      - prometheus
 
   loki:
     image: grafana/loki:3.0.0

@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Put, Param, Get, Delete } from '@nestjs/common';
+import { Controller, Post, Body, Put, Param, Get, Delete, Patch } from '@nestjs/common';
 import { GlossariesService } from './glossaries.service';
 import { CreateListingDto } from './dto/create.glossary.dto';
 import { UpdateListingDto } from './dto/update.glossary.dto';
@@ -10,12 +10,7 @@ export class GlossariesController {
 
     @Post()
     async createListing(@Body() body: CreateListingDto): Promise<ListingEntity> {
-        return await this.glossaryService.createListing(body)
-    }
-
-    @Put(':id')
-    async updateListing(@Param('id') id: number, @Body() body: UpdateListingDto): Promise<ListingEntity> {
-        return await this.glossaryService.updateListing(id, body);
+        return await this.glossaryService.createListing(body);
     }
 
     @Get()
@@ -23,9 +18,10 @@ export class GlossariesController {
         return await this.glossaryService.findAll();
     }
 
-    @Get(':id')
-    async findById(@Param('id') id: number): Promise<ListingEntity> {
-        return await this.glossaryService.findById(id);
+    // static routes before dynamic ones
+    @Delete('truncate')
+    async truncateListingsTable(): Promise<void> {
+        return await this.glossaryService.truncateListinsTable();
     }
 
     @Get('user/:user_id')
@@ -33,13 +29,19 @@ export class GlossariesController {
         return await this.glossaryService.findByUserId(user_id);
     }
 
+    // dynamic routes last
+    @Get(':id')
+    async findById(@Param('id') id: number): Promise<ListingEntity> {
+        return await this.glossaryService.findById(id);
+    }
+
+    @Patch(':id')
+    async updateListing(@Param('id') id: number, @Body() body: UpdateListingDto): Promise<ListingEntity> {
+        return await this.glossaryService.updateListing(id, body);
+    }
+
     @Delete(':id')
     async deleteListing(@Param('id') id: number): Promise<void> {
         return await this.glossaryService.deleteListing(id);
-    }
-
-    @Delete('truncate')
-    async truncateListinsTable(): Promise<void> {
-        return await this.glossaryService.truncateListinsTable();
     }
 }

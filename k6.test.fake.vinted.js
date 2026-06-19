@@ -34,6 +34,10 @@ export const options = {
         { duration: '1m', target: 50 },
         { duration: '2m', target: 100 },
         { duration: '30s', target: 0 },
+        { duration: '3m', target: 50 },
+        { duration: '5m', target: 80 },
+        { duration: '1m', target: 15 },
+        { duration: '30s', target: 0 },
       ],
       tags: { test_type: 'gateway' },
     },
@@ -42,6 +46,9 @@ export const options = {
       exec: 'wsTest',
       stages: [
         { duration: '30s', target: 10 },
+        { duration: '1m', target: 50 },
+        { duration: '30s', target: 0 },
+        { duration: '4m', target: 50 },
         { duration: '1m', target: 50 },
         { duration: '30s', target: 0 },
       ],
@@ -144,29 +151,29 @@ export function httpTest(data) {
   };
 
   // 1. create a listing
-  const createListingRes = http.post(
-    `${BASE_URL}/listing`,
-    JSON.stringify({
-      user_id: data.userId,
-      title: `Test Item ${Date.now()}`,
-      description: 'This is a test listing created by k6 load test',
-      price: Math.floor(Math.random() * 100) + 1,
-      category: randomItem(categories),
-      brand: 'TestBrand',
-      size: randomItem(sizes),
-      condition: randomItem(conditions),
-      status: 'available',
-      images: ['https://example.com/image1.jpg'],
-      location: 'Zagreb',
-    }),
-    { headers },
-  );
+  group('testing creating a listing', function () {
+    const createListingRes = http.post(
+      `${BASE_URL}/listing`,
+      JSON.stringify({
+        user_id: data.userId,
+        title: `Test Item ${Date.now()}`,
+        description: 'This is a test listing created by k6 load test',
+        price: Math.floor(Math.random() * 100) + 1,
+        category: randomItem(categories),
+        brand: 'TestBrand',
+        size: randomItem(sizes),
+        condition: randomItem(conditions),
+        status: 'available',
+        images: ['https://example.com/image1.jpg'],
+        location: 'Zagreb',
+      }),
+      { headers },
+    );
 
-  console.log('create listing status:', createListingRes.status);
-  console.log('create listing body:', createListingRes.body);
+    check(createListingRes, { 'listing created': (r) => r.status === 201 });
+    listing_created_counter.add(1, { test_type: 'gateway' });
+  });
 
-  check(createListingRes, { 'listing created': (r) => r.status === 201 });
-  listing_created_counter.add(1, { test_type: 'gateway' });
   sleep(1);
 
   // 2. get all listings
@@ -176,46 +183,55 @@ export function httpTest(data) {
     sleep(1); */
 
   // 3. get listing by id
-  const listingId = JSON.parse(createListingRes.body)?.id;
-  if (listingId) {
-    const getListingRes = http.get(`${BASE_URL}/listing/${listingId}`, { headers });
-    console.log('get listing status:', getListingRes.status);
-    console.log('get listing body:', getListingRes.body);
-    check(getListingRes, { 'got listing by id': (r) => r.status === 200 });
-    listing_getting_details_counter.add(1, { test_type: 'gateway' });
-  }
+  group('testing gettin details of lising', function () {
+    const listingId = JSON.parse(createListingRes.body)?.id;
+    if (listingId) {
+      const getListingRes = http.get(`${BASE_URL}/listing/${listingId}`, { headers });
+      check(getListingRes, { 'got listing by id': (r) => r.status === 200 });
+      listing_getting_details_counter.add(1, { test_type: 'gateway' });
+    }
+  });
 
   sleep(1);
 
   // 4. get user by id
-  const getUserRes = http.get(`${BASE_URL}/users/${data.userId}`, { headers });
-  check(getUserRes, { 'got user by id': (r) => r.status === 200 });
-  user_getting_details_counter.add(1, { test_type: 'gateway' });
+  group('testing get user details', function () {
+    const getUserRes = http.get(`${BASE_URL}/users/${data.userId}`, { headers });
+    check(getUserRes, { 'got user by id': (r) => r.status === 200 });
+    user_getting_details_counter.add(1, { test_type: 'gateway' });
+  });
+
   sleep(1);
 
-  // 5. update user
-  const updateUserRes = http.put(
-    `${BASE_URL}/users/${data.userId}`,
-    JSON.stringify({ bio: 'Updated bio from k6 test' }),
-    { headers },
-  );
-  check(updateUserRes, { 'user updated': (r) => r.status === 200 });
-  user_updated_counter.add(1, { test_type: 'gateway' });
+  group('testing updating an user', function () {
+    // 5. update user
+    const updateUserRes = http.put(
+      `${BASE_URL}/users/${data.userId}`,
+      JSON.stringify({ bio: 'Updated bio from k6 test' }),
+      { headers },
+    );
+    check(updateUserRes, { 'user updated': (r) => r.status === 200 });
+    user_updated_counter.add(1, { test_type: 'gateway' });
+  });
+
   sleep(1);
 
-  // 6. create conversation
-  const createConversationRes = http.post(
-    `${BASE_URL}/chat-vinted/conversations`,
-    JSON.stringify({
-      listing_id: listingId ?? 1,
-      buyer_id: data.userId,
-      seller_id: 1,
-    }),
-    { headers },
-  );
+  group('testing creating a conversation', function () {
+    // 6. create conversation
+    const createConversationRes = http.post(
+      `${BASE_URL}/chat-vinted/conversations`,
+      JSON.stringify({
+        listing_id: listingId ?? 1,
+        buyer_id: data.userId,
+        seller_id: 1,
+      }),
+      { headers },
+    );
 
-  check(createConversationRes, { 'conversation created': (r) => r.status === 201 });
-  conversation_created_counter.add(1, { test_type: 'gateway' });
+    check(createConversationRes, { 'conversation created': (r) => r.status === 201 });
+    conversation_created_counter.add(1, { test_type: 'gateway' });
+  });
+
   sleep(1);
 }
 
@@ -290,21 +306,22 @@ export function wsTest(data) {
 // --- TEARDOWN ---
 export function teardown(data) {
   console.log('Load test completed!');
-  console.log(data);
 
-  const deletetingMsgConvts = http.del(
-    `${BASE_URL}/chat-vinted/truncate`,
-    { headers: { 'Content-Type': 'application/json' } },
-  );
-  const deletetingUsers = http.del(
-    `${BASE_URL}/users/truncate`,
-    { headers: { 'Content-Type': 'application/json' } },
-  );
+  group('deleting all from users, listing, messages and conversations tables', function () {
+    const deletetingMsgConvts = http.del(
+      `${BASE_URL}/chat-vinted/truncate`,
+      { headers: { 'Content-Type': 'application/json' } },
+    );
+    const deletetingUsers = http.del(
+      `${BASE_URL}/users/truncate`,
+      { headers: { 'Content-Type': 'application/json' } },
+    );
 
-  const deletetingListing = http.del(
-    `${BASE_URL}/listing/truncate`,
-    { headers: { 'Content-Type': 'application/json' } },
-  );
+    const deletetingListing = http.del(
+      `${BASE_URL}/listing/truncate`,
+      { headers: { 'Content-Type': 'application/json' } },
+    );
+  });
 
   console.log(`${__VU} deleted all data from database`);
 
