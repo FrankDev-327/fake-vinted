@@ -1,11 +1,11 @@
 import { Module } from '@nestjs/common';
-import { ChatService } from './chat.service';
-import { ChatController } from './chat.controller';
-import { MessageEntity } from '../entities/messages.entity';
-import { ConversationEntity } from '../entities/conversations.entity';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { ClientsModule, Transport } from '@nestjs/microservices';
+import { dbdatasource } from '../orm';
+import { NotificationModule } from './notification/notification.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { ClientsModule, Transport } from '@nestjs/microservices';
+import { PromNotificationModule } from './prom_notification/prom_notification.module';
+
 
 @Module({
   imports: [
@@ -24,10 +24,12 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
         inject: [ConfigService],
       },
     ]),
-    TypeOrmModule.forFeature([MessageEntity, ConversationEntity]),
+    ConfigModule.forRoot({ isGlobal: true }),
+    TypeOrmModule.forRoot(dbdatasource),
+    NotificationModule,
+    PromNotificationModule
   ],
-  exports: [ChatService],
-  providers: [ChatService],
-  controllers: [ChatController]
+  controllers: [],
+  providers: [],
 })
-export class ChatModule { }
+export class AppModule { }

@@ -51,6 +51,19 @@ chat_vinted/.prettier*
 chat_vinted/.prettiercache
 #chat_vinted services
 
+#notifications services
+notifications/node_modules
+notifications/dist
+notifications/.env
+notifications/.vscode
+notifications/coverage
+notifications/build
+notifications/.cache
+notifications/logs
+notifications/.eslintrc*
+notifications/.prettier*
+notifications/.prettiercache
+#notifications services
 
 user_data
 gateway_data

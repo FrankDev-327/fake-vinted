@@ -70,6 +70,8 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
     env_file:
       - ./chat_vinted/.env
     networks:
@@ -78,6 +80,25 @@ services:
       - db_network
     volumes:
       - ./chat_data:/app
+    restart: unless-stopped
+
+  notifications:
+    container_name: ms_notifications
+    build:
+      context: ./notifications
+      dockerfile: Dockerfile
+    ports:
+      - "4003:4003"
+    depends_on:
+      db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    env_file:
+      - ./notifications/.env
+    networks:
+      - notifications_network
+      - db_network
     restart: unless-stopped
 
   alloy:
@@ -242,6 +263,25 @@ services:
       - redis_data:/data
     restart: unless-stopped
 
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: fake_vinted_rabbitmq
+    ports:
+      - "5672:5672"   # AMQP
+      - "15672:15672" # Management UI
+    env_file:
+      - ./.env
+    networks:
+      - notifications_network
+      - users_network
+      - gateway_network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
 volumes:
   loki_data:
   n8n_data:
@@ -256,6 +296,8 @@ volumes:
   chat_data:
 
 networks:
+  notifications_network:
+    driver: bridge
   chat_network:
     driver: bridge
   listing_network:

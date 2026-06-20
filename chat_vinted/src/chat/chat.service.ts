@@ -6,6 +6,9 @@ import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { ConversationEntity } from '../entities/conversations.entity';
 import { WsException } from '@nestjs/websockets';
+import { ClientProxy } from '@nestjs/microservices';
+import { Inject } from '@nestjs/common'
+
 @Injectable()
 export class ChatService {
     constructor(
@@ -13,6 +16,7 @@ export class ChatService {
         private readonly conversationRepository: Repository<ConversationEntity>,
         @InjectRepository(MessageEntity)
         private readonly messageRepository: Repository<MessageEntity>,
+        @Inject('NOTIFICATIONS_SERVICE') private readonly notificationsClient: ClientProxy
     ) { }
 
     async createConversation(dto: CreateConversationDto): Promise<ConversationEntity> {
@@ -36,11 +40,23 @@ export class ChatService {
             const conversation = await this.conversationRepository.findOneBy({
                 id: dto.conversation_id,
             });
+            
             if (!conversation) {
                 throw new WsException('Conversation not found');
             }
-            const message = this.messageRepository.create(dto);
-            return await this.messageRepository.save(message);
+
+            const messageCreated = this.messageRepository.create(dto);
+            const messageSaved = await this.messageRepository.save(messageCreated);
+
+            this.notificationsClient.emit('new_message', {
+                user_id: conversation.seller_id, // notify the other person
+                sender_id: dto.sender_id,
+                conversation_id: dto.conversation_id,
+                listing_id: conversation.listing_id,
+                content: dto.content,
+            });
+
+            return messageSaved;
         } catch (error) {
             if (error instanceof WsException) throw error;
             throw new WsException((error as Error).message);

@@ -17,6 +17,7 @@ prometheus.scrape "fake_vinted" {
   targets = [
     { __address__          = "ms_gateway:5000" },
     { __address__          = "ms_chat:4002" },
+    { __address__          = "ms_notifications:4003" },
   ]
 
   forward_to = [prometheus.remote_write.metrics.receiver]
