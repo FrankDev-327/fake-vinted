@@ -10,6 +10,8 @@ import { PromGatewayModule } from './prom-gateway/prom-gateway.module';
 import { ListingModule } from './listing/listing.module';
 import { JwtModule } from '@nestjs/jwt';
 import { ChatVintedModule } from './chat_vinted/chat_vinted.module';
+import { NotificationsModule } from './notifications/notifications.module';
+
 
 @Module({
   imports: [ConfigModule.forRoot({
@@ -19,7 +21,7 @@ import { ChatVintedModule } from './chat_vinted/chat_vinted.module';
     global: true,
     secret: process.env.KEY_SECRET,
     signOptions: {
-      expiresIn: '15m',
+      expiresIn: '24h',
     },
   }),
     AuthModule,
@@ -29,9 +31,10 @@ import { ChatVintedModule } from './chat_vinted/chat_vinted.module';
     LoggersModule,
     PromGatewayModule,
     ListingModule,
-    ChatVintedModule
+    ChatVintedModule,
+    NotificationsModule
   ],
   controllers: [],
-  providers: [PromGatewayService],
+  providers: [PromGatewayService,],
 })
 export class AppModule { }

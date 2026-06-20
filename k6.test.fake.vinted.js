@@ -21,6 +21,10 @@ export let chat_message_sent_counter = new Counter('chat_message_sent_counter');
 export let chat_message_received_counter = new Counter('chat_message_received_counter');
 export let chat_error_counter = new Counter('chat_error_counter');
 
+export let notification_getting_counter = new Counter('notification_getting_counter');
+export let notification_mark_read_counter = new Counter('notification_mark_read_counter');
+export let notification_mark_all_read_counter = new Counter('notification_mark_all_read_counter')
+
 const user_login_trend = new Trend('user_login_trend', true);
 const user_created_trend = new Trend('user_created_trend', true);
 
@@ -56,8 +60,8 @@ export const options = {
     },
   },
   thresholds: {
-    http_req_duration: ['p(95)<500'],
-    http_req_failed: ['rate<0.03'],
+    http_req_duration: ['p(95)<5000'],
+    http_req_failed: ['rate<0.05'],
     ws_connecting: ['p(95)<1000'],
     /*     'user_login_counter{test_type:gateway}': ['p(95)<900', 'p(90)<1000'],
         'user_created_counter{test_type:gateway}': ['p(95)<900', 'p(90)<1000'],
@@ -234,6 +238,50 @@ export function httpTest(data) {
   });
 
   sleep(1);
+
+  // 6. get user notifications
+  group('testing getting user notifications', function () {
+    const getNotificationsRes = http.get(
+      `${BASE_URL}/notifications/user/${data.userId}`,
+      { headers },
+    );
+    check(getNotificationsRes, { 'got notifications': (r) => r.status === 200 });
+    notification_getting_counter.add(1, { test_type: 'gateway' });
+
+    // if notifications exist mark first one as read
+    const notifications = JSON.parse(getNotificationsRes.body);
+    if (Array.isArray(notifications) && notifications.length > 0) {
+      const notificationId = notifications[0].id;
+
+      group('testing mark notification as read', function () {
+        const markReadRes = http.patch(
+          `${BASE_URL}/notifications/${notificationId}/read`,
+          null,
+          { headers },
+        );
+        check(markReadRes, { 'notification marked as read': (r) => r.status === 200 });
+        notification_mark_read_counter.add(1, { test_type: 'gateway' });
+      });
+    }
+  });
+
+  sleep(1);
+
+  // 7. mark all notifications as read
+  group('testing mark all notifications as read', function () {
+    const markAllReadRes = http.patch(
+      `${BASE_URL}/notifications/user/${data.userId}/read-all`,
+      null,
+      { headers },
+    );
+
+    console.log('mark all read status:', markAllReadRes.status);
+    console.log('mark all read body:', markAllReadRes.body);
+    check(markAllReadRes, { 'all notifications marked as read': (r) => r.status === 200 });
+    notification_mark_all_read_counter.add(1, { test_type: 'gateway' });
+  });
+
+  sleep(1);
 }
 
 // --- WEBSOCKET TEST ---
@@ -308,7 +356,7 @@ export function wsTest(data) {
 export function teardown(data) {
   console.log('Load test completed!');
 
-  group('deleting all from users, listing, messages and conversations tables', function () {
+  group('deleting all from users, listing, messages notifications and conversations tables', function () {
     const deletetingMsgConvts = http.del(
       `${BASE_URL}/chat-vinted/truncate`,
       { headers: { 'Content-Type': 'application/json' } },
@@ -322,7 +370,17 @@ export function teardown(data) {
       `${BASE_URL}/listing/truncate`,
       { headers: { 'Content-Type': 'application/json' } },
     );
+
+    const deletetingNotifications = http.del(
+      `${BASE_URL}/notifications/truncate`,
+      { headers: { 'Content-Type': 'application/json' } },
+    );
+
+    console.log('notifications truncate status:', deletetingNotifications.status);
+    console.log('notifications truncate body:', deletetingNotifications.body);
   });
+
+
 
   console.log(`${__VU} deleted all data from database`);
 

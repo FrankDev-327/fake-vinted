@@ -56,7 +56,7 @@ export class AxiosServiceService {
         }
     }
 
-    async patch(url: string, headers?: Record<string, string>): Promise<any> {
+    async patch(url: string, data: any, headers?: Record<string, string>): Promise<any> {
         try {
             const { data: responseData } = await firstValueFrom(
                 this.httpService.patch(url, { headers })

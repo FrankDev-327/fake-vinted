@@ -60,4 +60,12 @@ export class NotificationService {
             throw new BadGatewayException((error as Error).message);
         }
     }
+
+    async trucanteNotificationTable(): Promise<void> {
+        try {
+            await this.notificationRepository.deleteAll();
+        } catch (error) {
+            throw new BadGatewayException((error as Error).message);
+        }
+    }
 }
