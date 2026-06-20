@@ -78,6 +78,7 @@ services:
       - chat_network
       - gateway_network
       - db_network
+      - notifications_network
     volumes:
       - ./chat_data:/app
     restart: unless-stopped
