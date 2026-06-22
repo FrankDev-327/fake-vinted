@@ -54,9 +54,7 @@ Client ──► Chat Service       Chat ──► notifications_queue ──►
 | Prometheus    | 9090         | Metrics collection                         |
 | Grafana       | 3000         | Metrics visualization                      |
 | Loki          | 3100         | Log aggregation                            |
-| Grafana Alloy | 12345        | Telemetry collector                        |
-| Elasticsearch | 9200         | Log storage                                |
-| Kibana        | 5601         | Log visualization                          |
+| Grafana Alloy | 12345        | Telemetry collector                        |  |
 | Pushgateway   | 9091         | Prometheus push metrics                    |
 
 ---
@@ -360,12 +358,12 @@ fake-vinted/
 ### Auth
 | Method | Endpoint    | Auth | Description             |
 | ------ | ----------- | ---- | ----------------------- |
-| POST   | /auth/login | ✅    | Login and get JWT token |
+| POST   | /auth/login | ❌    | Login and get JWT token |
 
 ### Users
 | Method | Endpoint   | Auth | Description         |
 | ------ | ---------- | ---- | ------------------- |
-| POST   | /users     | ✅    | Register user       |
+| POST   | /users     | ❌    | Register user       |
 | GET    | /users/:id | ✅    | Get user by ID      |
 | PATCH  | /users/:id | ✅    | Update user profile |
 
