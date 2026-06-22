@@ -203,20 +203,72 @@ Load tested with a custom k6 build including the Socket.io extension (`k6/x/sock
 | Failure rate                | 0.00%                   |
 | Throughput                  | 289 req/s               |
 | Peak concurrent users       | 700 (400 HTTP + 300 WS) |
-| p95 response time           | 49ms                    |
 | WebSocket messages received | 75,156                  |
 
-Both runs passed all thresholds:
+### Run 3 — 38 minutes (with Redis adapter for horizontal scaling)
+| Metric                      | Value                   |
+| --------------------------- | ----------------------- |
+| Total checks                | 828,005                 |
+| HTTP requests               | 635,807                 |
+| Failure rate                | 0.00%                   |
+| Throughput                  | 275 req/s               |
+| Peak concurrent users       | 700 (400 HTTP + 300 WS) |
+| p95 response time           | 376ms                   |
+| WebSocket messages received | 75,152                  |
+| Iterations                  | 98,261                  |
+
+> The p95 response time increase from 49ms to 376ms in Run 3 is expected — the Redis adapter adds pub/sub overhead for every WebSocket broadcast. This is the tradeoff for horizontal scalability across multiple chat service instances.
+
+All runs passed all thresholds:
 - `http_req_duration p(95) < 500ms` ✅
 - `http_req_failed rate < 5%` ✅
 - `ws_connecting p(95) < 1000ms` ✅
+
+### Run 3 detailed metrics summary
+
+**Trends**
+
+| Metric              | avg   | min   | med  | max   | p90   | p95   | p99   |
+| ------------------- | ----- | ----- | ---- | ----- | ----- | ----- | ----- |
+| group_duration      | 927ms | 1ms   | 7ms  | 30s   | 227ms | 746ms | 30s   |
+| http_req_blocked    | 7µs   | 1µs   | 5µs  | 9ms   | 9µs   | 10µs  | 17µs  |
+| http_req_connecting | 130ns | 0ms   | 0ms  | 3ms   | 0ms   | 0ms   | 0ms   |
+| http_req_duration   | 67ms  | 1ms   | 7ms  | 3s    | 145ms | 376ms | 1s    |
+| http_req_receiving  | 68µs  | 10µs  | 54µs | 24ms  | 90µs  | 108µs | 337µs |
+| http_req_sending    | 25µs  | 4µs   | 19µs | 14ms  | 33µs  | 39µs  | 115µs |
+| http_req_waiting    | 67ms  | 1ms   | 7ms  | 3s    | 145ms | 376ms | 1s    |
+| iteration_duration  | 12s   | 8s    | 8s   | 30s   | 30s   | 30s   | 30s   |
+| ws_connecting       | 2ms   | 399µs | 1ms  | 179ms | 4ms   | 6ms   | 15ms  |
+| ws_session_duration | 11ms  | 1ms   | 6ms  | 398ms | 24ms  | 34ms  | 61ms  |
+
+**Counters**
+
+| Metric                             | Count   | Rate     |
+| ---------------------------------- | ------- | -------- |
+| chat_message_received_counter      | 18,788  | 8.15/s   |
+| chat_message_sent_counter          | 18,788  | 8.15/s   |
+| conversation_created_counter       | 79,475  | 34.46/s  |
+| http_reqs                          | 635,807 | 275.7/s  |
+| iterations                         | 98,261  | 42.61/s  |
+| listing_created_counter            | 79,475  | 34.46/s  |
+| listing_getting_details_counter    | 79,475  | 34.46/s  |
+| listing_search_counter             | 79,475  | 34.46/s  |
+| notification_getting_counter       | 79,475  | 34.46/s  |
+| notification_mark_all_read_counter | 79,475  | 34.46/s  |
+| user_getting_details_counter       | 79,475  | 34.46/s  |
+| user_updated_counter               | 79,475  | 34.46/s  |
+| ws_msgs_received                   | 75,152  | 32.59/s  |
+| ws_msgs_sent                       | 56,364  | 24.44/s  |
+| ws_sessions                        | 18,788  | 8.15/s   |
+| data_received                      | 591 MB  | 256 kB/s |
+| data_sent                          | 253 MB  | 110 kB/s |
 
 ### What the k6 test covers
 - User registration and login
 - JWT token management
 - Create listing
 - Get listing by ID
-- Full-text search with random query variants
+- Full-text search with random query variants (text only, text + category, text + price range, category + condition)
 - Get user profile
 - Update user profile
 - Create conversation
@@ -227,6 +279,7 @@ Both runs passed all thresholds:
 - Teardown: truncate all tables
 
 ---
+
 
 ## Getting Started
 
