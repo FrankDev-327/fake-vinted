@@ -203,12 +203,6 @@ export function httpTest(data) {
 
   sleep(1);
 
-  // 2. get all listings
-  /*   const getAllListingsRes = http.get(`${BASE_URL}/listing`, { headers });
-    check(getAllListingsRes, { 'got all listings': (r) => r.status === 200 });
-    listing_getting_all_counter.add(1, { test_type: 'gateway' });
-    sleep(1); */
-
   // 3. get listing by id
   group('testing gettin details of lising', function () {
     listingId = JSON.parse(createListingRes.body)?.id;
@@ -244,19 +238,19 @@ export function httpTest(data) {
     switch (searchVariant) {
       case 0:
         // full text search only
-        searchUrl = `${BASE_URL}/listing/search?q=${searchTerm}&page=1&limit=10`;
+        searchUrl = `${BASE_URL}/listing/search?q=${searchTerm}&page=1&limit=10&userId=${data.userId}`;
         break;
       case 1:
         // search with category filter
-        searchUrl = `${BASE_URL}/listing/search?q=${searchTerm}&category=${randomCategory}&page=1&limit=10`;
+        searchUrl = `${BASE_URL}/listing/search?q=${searchTerm}&category=${randomCategory}&page=1&limit=10&userId=${data.userId}`;
         break;
       case 2:
         // search with price range
-        searchUrl = `${BASE_URL}/listing/search?q=${searchTerm}&min_price=10&max_price=80&page=1&limit=10`;
+        searchUrl = `${BASE_URL}/listing/search?q=${searchTerm}&min_price=10&max_price=80&page=1&limit=10&userId=${data.userId}`;
         break;
       case 3:
         // search with condition and category
-        searchUrl = `${BASE_URL}/listing/search?category=${randomCategory}&condition=${randomCondition}&page=1&limit=20`;
+        searchUrl = `${BASE_URL}/listing/search?category=${randomCategory}&condition=${randomCondition}&page=1&limit=20&userId=${data.userId}`;
         break;
     }
 
