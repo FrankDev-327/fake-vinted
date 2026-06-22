@@ -408,6 +408,32 @@ Connect directly to `ws://localhost:4002` with namespace `/chat`
 
 ---
 
+## Load Test Report (HTML)
+
+The k6 test cann create an interactive HTML report with detailed charts and graphs using the [k6-reporter](https://github.com/benc-uk/k6-reporter) plugin.
+
+After running the load test, the report is generated at:
+
+```
+chat_fake_vinted.html
+```
+
+Open it in any browser to visualize:
+
+- HTTP request duration over time (p50, p90, p95, p99)
+- Request rate (req/s) over time
+- Virtual users ramp up/down curve
+- Failure rate over time
+- Per-group breakdown (listing creation, search, chat, notifications etc.)
+- Custom counters (messages sent, notifications, conversations created etc.)
+- WebSocket connection times
+
+The report is committed to the repo so you can view it directly without running the tests:
+
+👉 [View Load Test Report](./chat_fake_vinted.html)
+
+---
+
 ## Author
 
 Francisco — Backend Developer
