@@ -1,4 +1,3 @@
-import { Body, Controller, Param, Post, Put, Get, UseGuards, Delete, Patch } from '@nestjs/common';
 import {
     ApiTags,
     ApiBadRequestResponse,
@@ -8,6 +7,8 @@ import { CreateListingDto } from './dto/create.listing.dto';
 import { UpdateListingDto } from './dto/update.listing.dto';
 import { ListingService } from './listing.service';
 import { JwtguardGuard } from '../jwtguard/jwtguard.guard';
+import { SearchListingDto } from './dto/search.grossary-dto';
+import { Body, Controller, Param, Post, Put, Get, UseGuards, Delete, Patch, Query } from '@nestjs/common';
 
 @ApiTags('Listing')
 @Controller('listing')
@@ -35,6 +36,12 @@ export class ListingController {
     @ApiOperation({ summary: 'Truncate listings table' })
     async truncateListingsTable(): Promise<void> {
         return await this.listingService.truncateListinsTable();
+    }
+
+    @UseGuards(JwtguardGuard)
+    @Get('search')
+    async searchListings(@Query() dto: SearchListingDto): Promise<any> {
+        return await this.listingService.searchListings(dto);
     }
 
     @UseGuards(JwtguardGuard)

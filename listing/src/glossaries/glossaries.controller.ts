@@ -1,8 +1,9 @@
-import { Controller, Post, Body, Put, Param, Get, Delete, Patch } from '@nestjs/common';
 import { GlossariesService } from './glossaries.service';
 import { CreateListingDto } from './dto/create.glossary.dto';
 import { UpdateListingDto } from './dto/update.glossary.dto';
 import { ListingEntity } from '../entities/listing.entity';
+import { SearchListingDto } from './dto/search.grossary-dto';
+import { Controller, Post, Body, Put, Param, Get, Delete, Patch, Query } from '@nestjs/common';
 
 @Controller('glossaries')
 export class GlossariesController {
@@ -22,6 +23,11 @@ export class GlossariesController {
     @Delete('truncate')
     async truncateListingsTable(): Promise<void> {
         return await this.glossaryService.truncateListinsTable();
+    }
+
+    @Get('search')
+    async searchListings(@Query() dto: SearchListingDto): Promise<{ data: ListingEntity[], total: number }> {
+        return await this.glossaryService.searchListings(dto);
     }
 
     @Get('user/:user_id')

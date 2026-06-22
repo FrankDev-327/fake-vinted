@@ -4,12 +4,18 @@ import { AppModule } from './app.module';
 import { ConfigService } from '@nestjs/config';
 import { Logs } from './loggers/loggers.service';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
+import { PromGatewayService } from './prom-gateway/prom-gateway.service';
+import { MetricsInterceptor } from './metricsintercector/metrics.interceptor';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const logger = app.get(Logs);
   const configService = app.get(ConfigService);
   const port = configService.get('PORT');
+
+  // register global metrics interceptor
+  const promService = app.get(PromGatewayService);
+  app.useGlobalInterceptors(new MetricsInterceptor(promService))
 
   if (process.env.NODE_ENV !== 'prod') app.useLogger(logger);
 

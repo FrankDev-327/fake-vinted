@@ -5,6 +5,7 @@ import { PromGatewayService } from '../prom-gateway/prom-gateway.service';
 import { AxiosServiceService } from '../axios-service/axios-service.service';
 import { ConfigService } from '@nestjs/config';
 import { Logs } from '../loggers/loggers.service';
+import { SearchListingDto } from './dto/search.grossary-dto';
 
 @Injectable()
 export class ListingService {
@@ -127,6 +128,21 @@ export class ListingService {
                 throw new NotFoundException((error as Error).message)
             }
 
+            throw new BadGatewayException((error as Error).message);
+        }
+    }
+
+    async searchListings(query: SearchListingDto): Promise<any> {
+        try {
+            const params = new URLSearchParams(query as any).toString();
+            const url = `${this.configService.get<string>('MS_LISTING_URL')}/glossaries/search?${params}`;
+            const headers = { 'Content-Type': 'application/json' };
+            const response = await this.axiosService.get(url, headers);
+            this.promGatewayService.incrementRequestCounter('GET', '/listing/search', 200);
+            return response;
+        } catch (error) {
+            this.promGatewayService.incrementRequestCounter('GET', '/listing/search', 502);
+            this.logs.error(`Error searching listings: ${(error as Error).message}`, error);
             throw new BadGatewayException((error as Error).message);
         }
     }

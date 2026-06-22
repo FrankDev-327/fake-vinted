@@ -65,6 +65,9 @@ export class ListingEntity {
     @Column({ nullable: true })
     location: string;
 
+    @Column({ type: 'tsvector', nullable: true, select: false })
+    search_vector: any;
+
     @CreateDateColumn()
     created_at: Date;
 

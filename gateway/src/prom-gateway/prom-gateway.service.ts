@@ -9,7 +9,7 @@ export class PromGatewayService {
         this.client = new client.Registry();
         this.client.registerMetric(requestCounter);
         this.client.registerMetric(requestDurationHistogram);
-        this.client.setDefaultLabels({ app: 'prom-gateway' });
+        this.client.setDefaultLabels({ app: 'prom_gateway' });
         client.collectDefaultMetrics({
             register: this.client,
         });

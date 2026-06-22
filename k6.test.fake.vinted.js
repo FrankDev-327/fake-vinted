@@ -16,6 +16,7 @@ export let conversation_created_counter = new Counter('conversation_created_coun
 export let listing_created_counter = new Counter('listing_created_counter');
 export let listing_getting_all_counter = new Counter('listing_getting_all_counter');
 export let listing_getting_details_counter = new Counter('listing_getting_details_counter');
+export let listing_search_counter = new Counter('listing_search_counter');
 
 export let chat_message_sent_counter = new Counter('chat_message_sent_counter');
 export let chat_message_received_counter = new Counter('chat_message_received_counter');
@@ -34,14 +35,16 @@ export const options = {
       executor: 'ramping-vus',
       exec: 'httpTest',
       stages: [
-        { duration: '30s', target: 10 },
-        { duration: '1m', target: 50 },
-        { duration: '2m', target: 100 },
-        { duration: '30s', target: 0 },
-        { duration: '3m', target: 50 },
-        { duration: '5m', target: 80 },
-        { duration: '1m', target: 15 },
-        { duration: '30s', target: 0 },
+        { duration: '1m', target: 50 },    // warm up
+        { duration: '2m', target: 150 },   // ramp up fast
+        { duration: '5m', target: 200 },   // sustain high load
+        { duration: '3m', target: 300 },   // push hard
+        { duration: '10m', target: 300 },  // sustain peak - stress test
+        { duration: '3m', target: 400 },   // push to limit
+        { duration: '5m', target: 400 },   // sustain limit
+        { duration: '3m', target: 400 },   // push to limit
+        { duration: '5m', target: 400 },   // sustain limit
+        { duration: '1m', target: 0 },
       ],
       tags: { test_type: 'gateway' },
     },
@@ -49,18 +52,21 @@ export const options = {
       executor: 'ramping-vus',
       exec: 'wsTest',
       stages: [
-        { duration: '30s', target: 10 },
-        { duration: '1m', target: 50 },
-        { duration: '30s', target: 0 },
-        { duration: '4m', target: 50 },
-        { duration: '1m', target: 50 },
-        { duration: '30s', target: 0 },
+        { duration: '1m', target: 50 },    // warm up
+        { duration: '2m', target: 100 },   // ramp up
+        { duration: '5m', target: 200 },   // sustain
+        { duration: '3m', target: 300 },   // push hard
+        { duration: '10m', target: 300 },  // sustain peak
+        { duration: '3m', target: 300 },   // push hard
+        { duration: '10m', target: 300 },  // sustain peak
+        { duration: '3m', target: 150 },   // cool down
+        { duration: '1m', target: 0 },     // ramp down
       ],
       tags: { test_type: 'chat_socket' },
     },
   },
   thresholds: {
-    http_req_duration: ['p(95)<5000'],
+    http_req_duration: ['p(95)<500'],
     http_req_failed: ['rate<0.05'],
     ws_connecting: ['p(95)<1000'],
     /*     'user_login_counter{test_type:gateway}': ['p(95)<900', 'p(90)<1000'],
@@ -81,7 +87,7 @@ export const options = {
 
 export function handleSummary(data) {
   return {
-    'chat_fake_vinted.html': htmlReport(data),
+    'chat.fake.vinted.html': htmlReport(data),
     stdout: textSummary(data, { indent: ' ', enableColors: true }),
   };
 }
@@ -96,18 +102,33 @@ function randomItem(arr) {
 const sizes = ['XS', 'S', 'M', 'L', 'XL'];
 const conditions = ['new', 'like_new', 'good', 'fair'];
 const categories = ['shoes', 'clothes', 'accessories', 'bags'];
+const searchTerms = ['nike', 'test', 'item', 'brand', 'zagreb', 'clothes', 'shoes', 'bag'];
+const names = ["Alice", "Bob", "Charlie", "David", "Eve"];
+const countries = [
+  "United States", "Canada", "Mexico", "Brazil", "Argentina",
+  "United Kingdom", "France", "Germany", "Italy", "Spain",
+  "India", "China", "Japan", "Australia", "New Zealand"
+];
+
+const cities = [
+  "New York", "Los Angeles", "Chicago",
+  "Houston", "Phoenix", "Toronto", "Vancouver",
+  "Montreal", "Mexico City", "Guadalajara", "London",
+  "Paris", "Berlin", "Rome", "Madrid", "Mumbai", "Delhi",
+  "Tokyo", "Beijing", "Seoul", "Sydney", "Auckland"
+];
 
 // --- SETUP: runs once before the test ---
 export function setup() {
   const registerRes = http.post(
     `${BASE_URL}/users`,
     JSON.stringify({
-      email: `testuser_${Date.now()}@fakevinted.com`,
+      email: `${randomItem(names)}_${Date.now()}@fakevinted.com`,
       password: 'Test1234!',
-      username: `testuser_${Date.now()}`,
-      full_name: 'Test User',
-      city: 'Zagreb',
-      country: 'Croatia',
+      username: `${randomItem(names)}_${Date.now()}`,
+      full_name: randomItem(names),
+      city: randomItem(cities),
+      country: randomItem(countries),
     }),
     { headers: { 'Content-Type': 'application/json' } },
   );
@@ -140,6 +161,7 @@ export function setup() {
     }),
     { headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` } },
   );
+
   console.log('conversation response:', createConversationRes.body);
   const conversationId = JSON.parse(createConversationRes.body)?.id ?? 1;
   console.log('conversationId:', conversationId);
@@ -204,6 +226,49 @@ export function httpTest(data) {
     const getUserRes = http.get(`${BASE_URL}/users/${data.userId}`, { headers });
     check(getUserRes, { 'got user by id': (r) => r.status === 200 });
     user_getting_details_counter.add(1, { test_type: 'gateway' });
+  });
+
+  sleep(1);
+
+
+  // 3. search listings
+  group('testing search listings', function () {
+    const searchTerm = randomItem(searchTerms);
+    const randomCategory = randomItem(categories);
+    const randomCondition = randomItem(conditions);
+
+    // search with different combinations randomly
+    const searchVariant = Math.floor(Math.random() * 4);
+    let searchUrl;
+
+    switch (searchVariant) {
+      case 0:
+        // full text search only
+        searchUrl = `${BASE_URL}/listing/search?q=${searchTerm}&page=1&limit=10`;
+        break;
+      case 1:
+        // search with category filter
+        searchUrl = `${BASE_URL}/listing/search?q=${searchTerm}&category=${randomCategory}&page=1&limit=10`;
+        break;
+      case 2:
+        // search with price range
+        searchUrl = `${BASE_URL}/listing/search?q=${searchTerm}&min_price=10&max_price=80&page=1&limit=10`;
+        break;
+      case 3:
+        // search with condition and category
+        searchUrl = `${BASE_URL}/listing/search?category=${randomCategory}&condition=${randomCondition}&page=1&limit=20`;
+        break;
+    }
+
+    const searchRes = http.get(searchUrl, { headers });
+    check(searchRes, {
+      'search returned 200': (r) => r.status === 200,
+      'search returned data': (r) => {
+        const body = JSON.parse(r.body);
+        return body.data !== undefined && body.total !== undefined;
+      },
+    });
+    listing_search_counter.add(1, { test_type: 'gateway' });
   });
 
   sleep(1);
@@ -375,13 +440,7 @@ export function teardown(data) {
       `${BASE_URL}/notifications/truncate`,
       { headers: { 'Content-Type': 'application/json' } },
     );
-
-    console.log('notifications truncate status:', deletetingNotifications.status);
-    console.log('notifications truncate body:', deletetingNotifications.body);
   });
 
-
-
   console.log(`${__VU} deleted all data from database`);
-
 }
