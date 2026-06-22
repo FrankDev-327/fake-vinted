@@ -6,6 +6,7 @@ import { AxiosServiceService } from '../axios-service/axios-service.service';
 import { ConfigService } from '@nestjs/config';
 import { Logs } from '../loggers/loggers.service';
 import { SearchListingDto } from './dto/search.grossary-dto';
+import { RedisCachingService } from '../redis_caching/redis_caching.service';
 
 @Injectable()
 export class ListingService {
@@ -13,7 +14,8 @@ export class ListingService {
         private readonly axiosService: AxiosServiceService,
         private readonly configService: ConfigService,
         private readonly logs: Logs,
-        private readonly promGatewayService: PromGatewayService
+        private readonly promGatewayService: PromGatewayService,
+        private readonly redisCachingService: RedisCachingService
     ) { }
 
     async createListing(body: CreateListingDto): Promise<any> {
@@ -54,32 +56,20 @@ export class ListingService {
         }
     }
 
-    async findAll(): Promise<any> {
-        try {
-            const url = `${this.configService.get<string>('MS_LISTING_URL')}/glossaries`;
-            const headers = { 'Content-Type': 'application/json' };
-            const response = await this.axiosService.get(url, headers);
-
-            this.promGatewayService.incrementRequestCounter('GET', '/listing', 200);
-            return response;
-        } catch (error) {
-            this.promGatewayService.incrementRequestCounter('GET', '/listing/', 502);
-            this.logs.error(`Error getting all listing: ${(error as Error).message}`, error);
-
-            if (error instanceof NotFoundException) {
-                throw new NotFoundException((error as Error).message)
-            }
-            throw new BadGatewayException((error as Error).message); //
-        }
-    }
-
     async findByUserId(user_id: number): Promise<any> {
         try {
+            const keyToSearch = `glossaries-${user_id}`;
+            const data = await this.redisCachingService.get(keyToSearch)
+            if (data) {
+                return data;
+            }
+            
             const url = `${this.configService.get<string>('MS_LISTING_URL')}/glossaries/user/${user_id}`;
             const headers = { 'Content-Type': 'application/json' };
             const response = await this.axiosService.get(url, headers);
 
             this.promGatewayService.incrementRequestCounter('GET', `/listing/${user_id}`, 200);
+            await this.redisCachingService.set(response, keyToSearch, 150, true);
             return response;
         } catch (error) {
             this.promGatewayService.incrementRequestCounter('GET', `/listing/${user_id}`, 502);
@@ -114,11 +104,18 @@ export class ListingService {
 
     async findById(id: number): Promise<any> {
         try {
+            const keyToSearch = `listing-detail-${id}`;
+            const data = await this.redisCachingService.get(keyToSearch);
+            if(data) {
+                return data;
+            }
+
             const url = `${this.configService.get<string>('MS_LISTING_URL')}/glossaries/${id}`;
             const headers = { 'Content-Type': 'application/json' };
             const response = await this.axiosService.get(url, headers);
 
             this.promGatewayService.incrementRequestCounter('GET', `/listing/${id}`, 200);
+            await this.redisCachingService.set(response, keyToSearch, 150, true);
             return response;
         } catch (error) {
             this.promGatewayService.incrementRequestCounter('GET', `/listing/${id}`, 502);

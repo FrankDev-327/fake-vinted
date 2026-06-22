@@ -11,6 +11,7 @@ import { ListingModule } from './listing/listing.module';
 import { JwtModule } from '@nestjs/jwt';
 import { ChatVintedModule } from './chat_vinted/chat_vinted.module';
 import { NotificationsModule } from './notifications/notifications.module';
+import { RedisCachingModule } from './redis_caching/redis_caching.module';
 
 
 @Module({
@@ -32,7 +33,8 @@ import { NotificationsModule } from './notifications/notifications.module';
     PromGatewayModule,
     ListingModule,
     ChatVintedModule,
-    NotificationsModule
+    NotificationsModule,
+    RedisCachingModule
   ],
   controllers: [],
   providers: [PromGatewayService,],

@@ -23,14 +23,6 @@ export class ListingController {
         return await this.listingService.createListing(body);
     }
 
-    @UseGuards(JwtguardGuard)
-    @Get()
-    @ApiOperation({ summary: 'Get all listings' })
-    @ApiBadRequestResponse({ description: 'Error getting listings.' })
-    async findAll(): Promise<any[]> {
-        return await this.listingService.findAll();
-    }
-
     // specific static routes first
     @Delete('truncate')
     @ApiOperation({ summary: 'Truncate listings table' })
