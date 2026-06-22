@@ -403,14 +403,22 @@ Connect directly to `ws://localhost:4002` with namespace `/chat`
 | Method | Endpoint                             | Auth | Description               |
 | ------ | ------------------------------------ | ---- | ------------------------- |
 | GET    | /notifications/user/:userId          | ✅    | Get user notifications    |
-| PATCH  | /notifications/:id/read              | ✅    | Mark notification as read |
+| PATCH  | /notifications/:id/read              | ✅    | Mark notification as read | **** |
 | PATCH  | /notifications/user/:userId/read-all | ✅    | Mark all as read          |
+
+---
+
+## Grafana Dashboard
+
+Real-time observability dashboard monitoring all microservices during load testing — HTTP request rates, response time percentiles, WebSocket active connections, message processing duration, and notification counters.
+
+![Grafana Dashboard](./FakeVintendGrafanaDashboard.png)
 
 ---
 
 ## Load Test Report (HTML)
 
-The k6 test cann create an interactive HTML report with detailed charts and graphs using the [k6-reporter](https://github.com/benc-uk/k6-reporter) plugin.
+The k6 test can create an interactive HTML report with detailed charts and graphs using the [k6-reporter](https://github.com/benc-uk/k6-reporter) plugin.
 
 After running the load test, the report is generated at:
 
