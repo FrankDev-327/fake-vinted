@@ -92,8 +92,11 @@ export function handleSummary(data) {
   };
 }
 
-const BASE_URL = 'http://localhost:5000';
-const CHAT_URL = 'http://localhost:4002';
+/*const BASE_URL = 'http://localhost:5000';
+const CHAT_URL = 'http://localhost:4002';*/
+
+const BASE_URL = 'http://fake-vinted.local/api';
+const CHAT_URL = 'http://fake-vinted.local/socket';
 
 function randomItem(arr) {
   return arr[Math.floor(Math.random() * arr.length)];
@@ -254,6 +257,8 @@ export function httpTest(data) {
         break;
     }
 
+    console.log('search status:', searchRes.status);
+    console.log('search body:', searchRes.body);
     const searchRes = http.get(searchUrl, { headers });
     check(searchRes, {
       'search returned 200': (r) => r.status === 200,
