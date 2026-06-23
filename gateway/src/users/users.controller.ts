@@ -9,12 +9,14 @@ import {
 import { CreateUserDto } from './dto/create.user.dto';
 import { UpdateUserDto } from './dto/update.user.dto';
 import { JwtguardGuard } from '../jwtguard/jwtguard.guard';
+import { SkipThrottle, Throttle } from '@nestjs/throttler';
 
 @ApiTags('Users')
 @Controller('users')
 export class UsersController {
     constructor(private readonly userService: UsersService) { }
 
+    @SkipThrottle()
     @Post()
     @ApiOperation({ summary: 'Creation of an user' })
     // @ApiOkResponse({ type: LoginUserDto })

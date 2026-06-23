@@ -17,13 +17,13 @@ export class RedisCachingService {
         })
     }
 
-    async set(data, key: string, ttl = 400, checkTll = false): Promise<void> {
+    async set(data, key: string, ttl = 400, checkTtl = false): Promise<void> {
         try {
             const json = JSON.stringify(data);
-            if (checkTll) {
-                await this.redis.set(key, json);
-            } else {
+            if (checkTtl) {
                 await this.redis.setex(key, ttl, json);
+            } else {
+                await this.redis.set(key, json);
             }
         } catch (error) {
             if (error instanceof NotFoundException) {

@@ -33,6 +33,7 @@ export class ListingService {
             if (error instanceof NotFoundException) {
                 throw new NotFoundException((error as Error).message)
             }
+
             throw new BadGatewayException((error as Error).message);
         }
     }
@@ -52,6 +53,7 @@ export class ListingService {
             if (error instanceof NotFoundException) {
                 throw new NotFoundException((error as Error).message)
             }
+
             throw new BadGatewayException((error as Error).message);
         }
     }
@@ -60,10 +62,8 @@ export class ListingService {
         try {
             const keyToSearch = `glossaries-${user_id}`;
             const data = await this.redisCachingService.get(keyToSearch)
-            if (data) {
-                return data;
-            }
-            
+            if (data) return data;
+
             const url = `${this.configService.get<string>('MS_LISTING_URL')}/glossaries/user/${user_id}`;
             const headers = { 'Content-Type': 'application/json' };
             const response = await this.axiosService.get(url, headers);
@@ -78,6 +78,7 @@ export class ListingService {
             if (error instanceof NotFoundException) {
                 throw new NotFoundException((error as Error).message)
             }
+
             throw new BadGatewayException((error as Error).message); //
         }
     }
@@ -106,9 +107,7 @@ export class ListingService {
         try {
             const keyToSearch = `listing-detail-${id}`;
             const data = await this.redisCachingService.get(keyToSearch);
-            if(data) {
-                return data;
-            }
+            if (data) return data;
 
             const url = `${this.configService.get<string>('MS_LISTING_URL')}/glossaries/${id}`;
             const headers = { 'Content-Type': 'application/json' };
@@ -132,14 +131,26 @@ export class ListingService {
     async searchListings(query: SearchListingDto): Promise<any> {
         try {
             const params = new URLSearchParams(query as any).toString();
+            const keyToSearch = `search-listings:${params}`;
+
+            const data = await this.redisCachingService.get(keyToSearch);
+            if (data) return data;
+
             const url = `${this.configService.get<string>('MS_LISTING_URL')}/glossaries/search?${params}`;
             const headers = { 'Content-Type': 'application/json' };
             const response = await this.axiosService.get(url, headers);
+
             this.promGatewayService.incrementRequestCounter('GET', '/listing/search', 200);
+            await this.redisCachingService.set(response, keyToSearch, 60, true);
             return response;
         } catch (error) {
             this.promGatewayService.incrementRequestCounter('GET', '/listing/search', 502);
             this.logs.error(`Error searching listings: ${(error as Error).message}`, error);
+
+            if (error instanceof NotFoundException) {
+                throw new NotFoundException((error as Error).message)
+            }
+
             throw new BadGatewayException((error as Error).message);
         }
     }
@@ -152,8 +163,6 @@ export class ListingService {
 
             return response;
         } catch (error) {
-            console.log(error);
-
             this.logs.error(`Error deleteting listing: ${(error as Error).message}`, error);
             if (error instanceof NotFoundException) {
                 throw new NotFoundException((error as Error).message)

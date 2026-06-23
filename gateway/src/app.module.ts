@@ -5,18 +5,29 @@ import { HttpModule } from '@nestjs/axios';
 import { UsersModule } from './users/users.module';
 import { AxiosServiceModule } from './axios-service/axios-service.module';
 import { LoggersModule } from './loggers/loggers.module';
-import { PromGatewayService } from './prom-gateway/prom-gateway.service';
 import { PromGatewayModule } from './prom-gateway/prom-gateway.module';
 import { ListingModule } from './listing/listing.module';
 import { JwtModule } from '@nestjs/jwt';
 import { ChatVintedModule } from './chat_vinted/chat_vinted.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { RedisCachingModule } from './redis_caching/redis_caching.module';
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
+import { APP_GUARD } from '@nestjs/core';
 
 
 @Module({
   imports: [ConfigModule.forRoot({
     isGlobal: true,
+  }),
+  ThrottlerModule.forRootAsync({
+    imports: [ConfigModule],
+    useFactory: (configService: ConfigService) => ([{
+      ttl: configService.get<number>('THROTTLE_TTL') ?? 60000, // 1 minute window
+      limit: configService.get<string>('NODE_ENV') === 'prod'
+        ? configService.get<number>('THROTTLE_LIMIT') ?? 100
+        : 10000, // max 100 requests per window
+    }]),
+    inject: [ConfigService],
   }),
   JwtModule.register({
     global: true,
@@ -37,6 +48,11 @@ import { RedisCachingModule } from './redis_caching/redis_caching.module';
     RedisCachingModule
   ],
   controllers: [],
-  providers: [PromGatewayService,],
+  providers: [
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard, // applies globally to all endpoints
+    },
+  ],
 })
 export class AppModule { }

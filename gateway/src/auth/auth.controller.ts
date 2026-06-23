@@ -8,12 +8,14 @@ import {
     ApiOperation,
     ApiOkResponse,
 } from '@nestjs/swagger';
+import { Throttle, SkipThrottle } from '@nestjs/throttler';
 
 @ApiTags('Auth')
 @Controller('auth')
 export class AuthController {
     constructor(private readonly authService: AuthService) { }
 
+    @Throttle({ default: { ttl: 60000, limit: 5 } })
     @Post('login')
     @ApiOperation({ summary: 'User autentication' })
     @ApiOkResponse({ type: LoginUserDto })
