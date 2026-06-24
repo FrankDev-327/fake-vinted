@@ -92,9 +92,6 @@ export function handleSummary(data) {
   };
 }
 
-/*const BASE_URL = 'http://localhost:5000';
-const CHAT_URL = 'http://localhost:4002';*/
-
 const BASE_URL = 'http://fake-vinted.local/api';
 const CHAT_URL = 'http://fake-vinted.local/socket';
 
@@ -123,7 +120,8 @@ const cities = [
 
 // --- SETUP: runs once before the test ---
 export function setup() {
-  const registerRes = http.post(
+  let registerRes;
+  registerRes = http.post(
     `${BASE_URL}/users`,
     JSON.stringify({
       email: `${randomItem(names)}_${Date.now()}@fakevinted.com`,
@@ -151,8 +149,12 @@ export function setup() {
   check(loginRes, { 'login successful': (r) => r.status === 201 });
   user_login_counter.add(1), { test_type: 'gateway' };
 
-  const token = JSON.parse(loginRes.body).access_token;
-  const userId = JSON.parse(registerRes.body).id;
+  try {
+    const token = JSON.parse(loginRes.body).access_token;
+    const userId = JSON.parse(registerRes.body).id;
+  } catch (error) {
+    return false;
+  }
 
   // create a conversation to use in ws test
   const createConversationRes = http.post(
@@ -208,13 +210,27 @@ export function httpTest(data) {
 
   // 3. get listing by id
   group('testing gettin details of lising', function () {
-    listingId = JSON.parse(createListingRes.body)?.id;
+    try {
+      listingId = JSON.parse(createListingRes.body)?.id;
+    } catch (e) {
+      console.error('listing parse error:', createListingRes.status, createListingRes.body.substring(0, 100));
+    }
     if (listingId) {
       const getListingRes = http.get(`${BASE_URL}/listing/${listingId}`, { headers });
       check(getListingRes, { 'got listing by id': (r) => r.status === 200 });
       listing_getting_details_counter.add(1, { test_type: 'gateway' });
     }
   });
+
+
+  /*group('testing gettin details of lising', function () {
+    listingId = JSON.parse(createListingRes.body)?.id;
+    if (listingId) {
+      const getListingRes = http.get(`${BASE_URL}/listing/${listingId}`, { headers });
+      check(getListingRes, { 'got listing by id': (r) => r.status === 200 });
+      listing_getting_details_counter.add(1, { test_type: 'gateway' });
+    }
+  });*/
 
   sleep(1);
 
@@ -257,14 +273,22 @@ export function httpTest(data) {
         break;
     }
 
-    console.log('search status:', searchRes.status);
-    console.log('search body:', searchRes.body);
+
     const searchRes = http.get(searchUrl, { headers });
+    console.log('search status:', searchRes?.status);
+    console.log('search body:', searchRes?.body);
     check(searchRes, {
       'search returned 200': (r) => r.status === 200,
       'search returned data': (r) => {
-        const body = JSON.parse(r.body);
-        return body.data !== undefined && body.total !== undefined;
+        if (r.status !== 200) return false;
+        try {
+          const body = JSON.parse(r.body);
+          return body.data !== undefined && body.total !== undefined;
+        } catch (e) {
+          console.log('searchRes----------------> down');
+          console.log(searchRes);
+          return false;
+        }
       },
     });
     listing_search_counter.add(1, { test_type: 'gateway' });
@@ -313,6 +337,36 @@ export function httpTest(data) {
     notification_getting_counter.add(1, { test_type: 'gateway' });
 
     // if notifications exist mark first one as read
+    let notifications = [];
+    try {
+      notifications = JSON.parse(getNotificationsRes.body);
+    } catch (e) {
+      console.error('notifications parse error:', getNotificationsRes.status, getNotificationsRes.body.substring(0, 100));
+    }
+
+    if (Array.isArray(notifications) && notifications.length > 0) {
+      const notificationId = notifications[0].id;
+      group('testing mark notification as read', function () {
+        const markReadRes = http.patch(
+          `${BASE_URL}/notifications/${notificationId}/read`,
+          null,
+          { headers },
+        );
+        check(markReadRes, { 'notification marked as read': (r) => r.status === 200 });
+        notification_mark_read_counter.add(1, { test_type: 'gateway' });
+      });
+    }
+  });
+
+  /*group('testing getting user notifications', function () {
+    const getNotificationsRes = http.get(
+      `${BASE_URL}/notifications/user/${data.userId}`,
+      { headers },
+    );
+    check(getNotificationsRes, { 'got notifications': (r) => r.status === 200 });
+    notification_getting_counter.add(1, { test_type: 'gateway' });
+
+    // if notifications exist mark first one as read
     const notifications = JSON.parse(getNotificationsRes.body);
     if (Array.isArray(notifications) && notifications.length > 0) {
       const notificationId = notifications[0].id;
@@ -327,7 +381,7 @@ export function httpTest(data) {
         notification_mark_read_counter.add(1, { test_type: 'gateway' });
       });
     }
-  });
+  });*/
 
   sleep(1);
 
