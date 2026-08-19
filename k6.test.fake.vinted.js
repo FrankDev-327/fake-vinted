@@ -149,9 +149,10 @@ export function setup() {
   check(loginRes, { 'login successful': (r) => r.status === 201 });
   user_login_counter.add(1), { test_type: 'gateway' };
 
+  let token, userId;
   try {
-    const token = JSON.parse(loginRes.body).access_token;
-    const userId = JSON.parse(registerRes.body).id;
+    token = JSON.parse(loginRes.body).access_token;
+    userId = JSON.parse(registerRes.body).id;
   } catch (error) {
     return false;
   }

@@ -28,8 +28,7 @@ services:
     ports:
       - "4000:4000"
     depends_on:
-      db:
-        condition: service_healthy
+      - db
     env_file:
       - ./users/.env
     networks:
@@ -48,8 +47,7 @@ services:
     ports:
       - "4001:4001"
     depends_on:
-      db:
-        condition: service_healthy
+      - db
     env_file:
       - ./listing/.env
     networks:
@@ -69,10 +67,8 @@ services:
     ports:
       - "4002:4002"
     depends_on:
-      db:
-        condition: service_healthy
-      rabbitmq:
-        condition: service_healthy
+      - db
+      - rabbitmq
     env_file:
       - ./chat_vinted/.env
     networks:
@@ -92,10 +88,8 @@ services:
     ports:
       - "4003:4003"
     depends_on:
-      db:
-        condition: service_healthy
-      rabbitmq:
-        condition: service_healthy
+      - db
+      - rabbitmq
     env_file:
       - ./notifications/.env
     networks:
@@ -119,6 +113,7 @@ services:
     networks:
       - grafana
       - db_network
+      - gateway_network
     restart: unless-stopped
     command: run --server.http.listen-addr=0.0.0.0:12345 --storage.path=/var/lib/alloy/data /etc/alloy/config.alloy
     env_file:
@@ -176,21 +171,18 @@ services:
     environment:
       POSTGRES_USER: ${DB_USER_NAME}
       POSTGRES_PASSWORD: ${DB_USER_PASSWORD}
+      POSTGRES_MULTIPLE_DATABASES: ${DB_MULTIPLE_DATABASES}
     ports:
       - "5432:5432"
     volumes:
       - pg_db_data:/var/lib/postgresql/data
+      - ./postgres/init-db:/docker-entrypoint-initdb.d:ro
     networks:
       db_network:
         ipv4_address: 10.5.0.10
       grafana:
       users_network:
     restart: always
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U webdevuser -d vinted_db"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
 
   prometheus:
     image: prom/prometheus
@@ -281,11 +273,6 @@ services:
       - users_network
       - gateway_network
     restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "rabbitmq-diagnostics", "ping"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
 
   nginx:
     image: nginx:alpine
@@ -299,14 +286,42 @@ services:
       - gateway
       - chat_vinted
     networks:
-      - gateway_network
-      - chat_network
+      gateway_network:
+      chat_network:
+      loadtest_network:
+        # lets the k6 container resolve the hostname the test script already
+        # hardcodes (http://fake-vinted.local/...), no /etc/hosts juggling needed
+        aliases:
+          - fake-vinted.local
     restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "wget", "-q", "--spider", "http://localhost/health"]
-      interval: 10s
-      timeout: 5s
-      retries: 3
+
+  k6:
+    build:
+      context: ./k6
+      dockerfile: Dockerfile
+    container_name: fake_vinted_k6
+    profiles:
+      - loadtest
+    # required for the entrypoint's `ip addr add`, which binds the --local-ips
+    # pool so nginx sees a distinct source IP per VU instead of one shared IP
+    cap_add:
+      - NET_ADMIN
+    depends_on:
+      - db
+      - redis
+      - rabbitmq
+      - users
+      - listing
+      - chat_vinted
+      - notifications
+      - gateway
+      - nginx
+    networks:
+      - loadtest_network
+    volumes:
+      - ./k6.test.fake.vinted.js:/scripts/k6.test.fake.vinted.js:ro
+      - ./k6_reports:/reports
+    command: ["/scripts/k6.test.fake.vinted.js"]
 
 volumes:
   loki_data:
@@ -344,3 +359,9 @@ networks:
       config:
         - subnet: 10.5.0.0/24
           gateway: 10.5.0.1
+  loadtest_network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 10.90.0.0/16
+          gateway: 10.90.0.1
