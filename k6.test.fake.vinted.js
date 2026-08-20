@@ -14,7 +14,6 @@ export let user_updated_counter = new Counter('user_updated_counter');
 export let conversation_created_counter = new Counter('conversation_created_counter');
 
 export let listing_created_counter = new Counter('listing_created_counter');
-export let listing_getting_all_counter = new Counter('listing_getting_all_counter');
 export let listing_getting_details_counter = new Counter('listing_getting_details_counter');
 export let listing_search_counter = new Counter('listing_search_counter');
 
@@ -28,6 +27,10 @@ export let notification_mark_all_read_counter = new Counter('notification_mark_a
 
 const user_login_trend = new Trend('user_login_trend', true);
 const user_created_trend = new Trend('user_created_trend', true);
+const user_getting_details_trend = new Trend('user_getting_details_trend', true);
+const user_updated_trend = new Trend('user_updated_trend', true);
+const listing_created_trend = new Trend('listing_created_trend', true);
+const listing_getting_details_trend = new Trend('listing_getting_details_trend', true);
 
 export const options = {
   scenarios: {
@@ -69,19 +72,13 @@ export const options = {
     http_req_duration: ['p(95)<500'],
     http_req_failed: ['rate<0.05'],
     ws_connecting: ['p(95)<1000'],
-    /*     'user_login_counter{test_type:gateway}': ['p(95)<900', 'p(90)<1000'],
-        'user_created_counter{test_type:gateway}': ['p(95)<900', 'p(90)<1000'],
-        'user_getting_details_counter{test_type:gateway}': ['p(95)<900', 'p(90)<1000'],
-        'user_updated_counter{test_type:gateway}': ['p(95)<900', 'p(90)<1000'],
-    
-        'listing_created_counter{test_type:gateway}': ['p(95)<900', 'p(90)<1000'],
-        'listing_getting_all_counter{test_type:gateway}': ['p(95)<900', 'p(90)<1000'],
-        'listing_getting_details_counter{test_type:gateway}': ['p(95)<900', 'p(90)<1000'],
-    
-        'listing_getting_details_counter{test_type:gateway}': ['p(95)<900', 'p(90)<1000'],
-        'listing_getting_details_counter{test_type:gateway}': ['p(95)<900', 'p(90)<1000'],
-        'listing_getting_details_counter{test_type:gateway}': ['p(95)<900', 'p(90)<1000'], */
+    'user_login_trend{test_type:gateway}': ['p(95)<900', 'p(90)<1000'],
+    'user_created_trend{test_type:gateway}': ['p(95)<900', 'p(90)<1000'],
+    'user_getting_details_trend{test_type:gateway}': ['p(95)<900', 'p(90)<1000'],
+    'user_updated_trend{test_type:gateway}': ['p(95)<900', 'p(90)<1000'],
 
+    'listing_created_trend{test_type:gateway}': ['p(95)<900', 'p(90)<1000'],
+    'listing_getting_details_trend{test_type:gateway}': ['p(95)<900', 'p(90)<1000'],
   },
 };
 
@@ -136,6 +133,7 @@ export function setup() {
 
   check(registerRes, { 'user registered': (r) => r.status === 201 });
   user_created_counter.add(1), { test_type: 'gateway' };
+  user_created_trend.add(registerRes.timings.duration, { test_type: 'gateway' });
 
   const loginRes = http.post(
     `${BASE_URL}/auth/login`,
@@ -148,6 +146,7 @@ export function setup() {
 
   check(loginRes, { 'login successful': (r) => r.status === 201 });
   user_login_counter.add(1), { test_type: 'gateway' };
+  user_login_trend.add(loginRes.timings.duration, { test_type: 'gateway' });
 
   let token, userId;
   try {
@@ -205,6 +204,7 @@ export function httpTest(data) {
 
     check(createListingRes, { 'listing created': (r) => r.status === 201 });
     listing_created_counter.add(1, { test_type: 'gateway' });
+    listing_created_trend.add(createListingRes.timings.duration, { test_type: 'gateway' });
   });
 
   sleep(1);
@@ -220,18 +220,20 @@ export function httpTest(data) {
       const getListingRes = http.get(`${BASE_URL}/listing/${listingId}`, { headers });
       check(getListingRes, { 'got listing by id': (r) => r.status === 200 });
       listing_getting_details_counter.add(1, { test_type: 'gateway' });
+      listing_getting_details_trend.add(getListingRes.timings.duration, { test_type: 'gateway' });
     }
   });
 
 
-  /*group('testing gettin details of lising', function () {
+  group('testing gettin details of lising', function () {
     listingId = JSON.parse(createListingRes.body)?.id;
     if (listingId) {
       const getListingRes = http.get(`${BASE_URL}/listing/${listingId}`, { headers });
       check(getListingRes, { 'got listing by id': (r) => r.status === 200 });
       listing_getting_details_counter.add(1, { test_type: 'gateway' });
+      listing_getting_details_trend.add(getListingRes.timings.duration, { test_type: 'gateway' });
     }
-  });*/
+  });
 
   sleep(1);
 
@@ -240,6 +242,7 @@ export function httpTest(data) {
     const getUserRes = http.get(`${BASE_URL}/users/${data.userId}`, { headers });
     check(getUserRes, { 'got user by id': (r) => r.status === 200 });
     user_getting_details_counter.add(1, { test_type: 'gateway' });
+    user_getting_details_trend.add(getUserRes.timings.duration, { test_type: 'gateway' });
   });
 
   sleep(1);
@@ -306,6 +309,7 @@ export function httpTest(data) {
     );
     check(updateUserRes, { 'user updated': (r) => r.status === 200 });
     user_updated_counter.add(1, { test_type: 'gateway' });
+    user_updated_trend.add(updateUserRes.timings.duration, { test_type: 'gateway' });
   });
 
   sleep(1);
@@ -359,7 +363,7 @@ export function httpTest(data) {
     }
   });
 
-  /*group('testing getting user notifications', function () {
+  group('testing getting user notifications', function () {
     const getNotificationsRes = http.get(
       `${BASE_URL}/notifications/user/${data.userId}`,
       { headers },
@@ -382,7 +386,7 @@ export function httpTest(data) {
         notification_mark_read_counter.add(1, { test_type: 'gateway' });
       });
     }
-  });*/
+  });
 
   sleep(1);
 

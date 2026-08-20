@@ -16,4 +16,12 @@ echo "binding local IP pool ${LOCAL_IPS} to ${IFACE} for source-IP rotation"
 # locally bindable instead.
 ip route add local "$LOCAL_IPS" dev "$IFACE"
 
+# docker-compose `depends_on` only waits for containers to start, not for the
+# apps inside them to finish building/migrating/booting (chat_vinted, users,
+# listing, notifications all run a full build + migration before listening),
+# so give them a head start before k6 opens the floodgates.
+START_DELAY="${K6_START_DELAY:-30}"
+echo "waiting ${START_DELAY}s for backend services to finish starting up"
+sleep "$START_DELAY"
+
 exec k6 run --local-ips="$LOCAL_IPS" "$@"

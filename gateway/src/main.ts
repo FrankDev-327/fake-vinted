@@ -1,5 +1,6 @@
 import 'dotenv/config';
 import { NestFactory } from '@nestjs/core';
+import { NestExpressApplication } from '@nestjs/platform-express';
 import { AppModule } from './app.module';
 import { ConfigService } from '@nestjs/config';
 import { Logs } from './loggers/loggers.service';
@@ -8,10 +9,14 @@ import { PromGatewayService } from './prom-gateway/prom-gateway.service';
 import { MetricsInterceptor } from './metricsintercector/metrics.interceptor';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
   const logger = app.get(Logs);
   const configService = app.get(ConfigService);
   const port = configService.get('PORT');
+
+  // trust nginx as reverse proxy so req.ip reflects the real client IP
+  // (X-Real-IP / X-Forwarded-For), not the nginx container address
+  app.set('trust proxy', 1);
 
   // register global metrics interceptor
   const promService = app.get(PromGatewayService);
