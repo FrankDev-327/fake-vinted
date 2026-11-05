@@ -53,40 +53,40 @@ prometheus.remote_write "metrics" {
 // ###############################
 // #### Loki Configuration ####
 // ###############################
-// local.file_match "all_chat_logs" {
-//   path_targets = [
-//     {
-//       __path__ = "/mnt/chat_logs/*.log",
-//       job = "chat-app",
-//       service = "main-app",
-//     },
-//     {
-//       __path__ = "/mnt/chat_logs_notification/*.log",
-//       job = "notification-app",
-//       service = "notification",
-//     },
-//     {
-//       __path__ = "/mnt/chat_logs_cron_jobs/*.log",
-//       job = "cronjobs-app",
-//       service = "cronjobs",
-//     },
-//   ]
-// }
+// Finds the containers through the docker socket, so a new service needs no changes here
+discovery.docker "containers" {
+  host = "unix:///var/run/docker.sock"
+}
 
-// loki.source.file "chat_logs" {
-//   targets    = local.file_match.all_chat_logs.targets
-//   forward_to = [loki.write.default.receiver]
-// }
+discovery.relabel "containers" {
+  targets = discovery.docker.containers.targets
 
-// // --- Loki destination ---
-// loki.write "default" {
-//   endpoint {
-//     url = "http://loki:3100/loki/api/v1/push"
-//   }
-//   wal {
-//     enabled = false
-//   }
-// }
+  // only this project's containers
+  rule {
+    source_labels = ["__meta_docker_container_label_com_docker_compose_project"]
+    regex         = "fake-vinted"
+    action        = "keep"
+  }
+
+  rule {
+    source_labels = ["__meta_docker_container_label_com_docker_compose_service"]
+    target_label  = "service"
+  }
+}
+
+// Reads what the containers write to stdout and stderr
+loki.source.docker "containers" {
+  host       = "unix:///var/run/docker.sock"
+  targets    = discovery.relabel.containers.output
+  forward_to = [loki.write.default.receiver]
+}
+
+// --- Loki destination ---
+loki.write "default" {
+  endpoint {
+    url = "http://loki:3100/loki/api/v1/push"
+  }
+}
 
 // ###############################################
 // #### Prometheus Postgres Database Configuration #####

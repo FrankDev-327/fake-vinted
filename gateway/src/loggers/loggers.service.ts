@@ -13,18 +13,10 @@ export class Logs implements LoggerService {
             ),
             transports: [
                 new transports.File({ filename: `logs/${fileCustomName}.log` }),
+                // Alloy reads stdout and ships it to Loki
+                new transports.Console(),
             ],
         });
-
-        if (process.env.NODE_ENV === 'dev') {
-            this.logger.add(new transports.Console({
-                level: 'info',
-                format: format.combine(
-                    format.colorize(),
-                    format.simple()
-                ),
-            }))
-        }
     }
 
     log(message: any, ...optionalParams: any[]) {
