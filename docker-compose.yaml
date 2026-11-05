@@ -235,6 +235,8 @@ services:
       FLOCI_INIT_HOOKS_TIMEOUT_SECONDS: 120
       # the Lambda reports results to the listing service over this network
       FLOCI_SERVICES_LAMBDA_DOCKER_NETWORK: fake-vinted_listing_network
+      # Floci is on two networks now, so Lambdas must find it by name on the one they share
+      FLOCI_SERVICES_LAMBDA_DOCKER_HOST_OVERRIDE: floci
       S3_BUCKET: fake-vinted-listing-images
       LISTING_INTERNAL_URL: http://ms_listing:4001
       IMAGE_PROCESSOR_API_KEY: ${IMAGE_PROCESSOR_API_KEY:?set it in the root .env}
@@ -244,6 +246,8 @@ services:
       - ./floci/init/ready.d:/etc/floci/init/ready.d:ro
     networks:
       - listing_network
+      # so k6 can upload images, since it can't reach the published localhost port
+      - loadtest_network
     restart: unless-stopped
 
   redis:
@@ -311,10 +315,14 @@ services:
       - notifications
       - gateway
       - nginx
+      - floci
+    environment:
+      S3_URL: http://floci:4566
     networks:
       - loadtest_network
     volumes:
       - ./k6.test.fake.vinted.js:/scripts/k6.test.fake.vinted.js:ro
+      - ./k6/fixtures:/scripts/k6/fixtures:ro
       - ./k6_reports:/reports
     command: ["/scripts/k6.test.fake.vinted.js"]
 

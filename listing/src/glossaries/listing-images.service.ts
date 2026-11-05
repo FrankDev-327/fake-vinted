@@ -13,6 +13,7 @@ import { ListingImageEntity, ListingImageStatus } from '../entities/listing-imag
 import { LogsService } from '../loggers/logs.service';
 import { S3Service } from '../s3/s3.service';
 import { CreateUploadUrlDto, ProcessingResultDto } from './dto/listing-image.dto';
+import { ImageMetricsService } from './image-metrics.service';
 import { imageExtension, validateImageUpload } from './image-upload.validation';
 
 const UPLOAD_URL_TTL_SECONDS = 300;
@@ -23,6 +24,7 @@ export class ListingImagesService {
     constructor(
         private readonly s3Service: S3Service,
         private readonly logService: LogsService,
+        private readonly imageMetrics: ImageMetricsService,
         @InjectRepository(ListingEntity) private readonly listingRepository: Repository<ListingEntity>,
         @InjectRepository(ListingImageEntity) private readonly imageRepository: Repository<ListingImageEntity>,
     ) { }
@@ -34,6 +36,7 @@ export class ListingImagesService {
 
         const errors = validateImageUpload(dto);
         if (errors.length > 0) {
+            errors.forEach((error) => this.imageMetrics.uploadRefused(error.code));
             throw new BadRequestException({
                 statusCode: 400,
                 error: 'Bad Request',
@@ -43,6 +46,7 @@ export class ListingImagesService {
         }
 
         if ((await this.countActiveImages(listingId)) >= MAX_IMAGES_PER_LISTING) {
+            this.imageMetrics.uploadRefused('TOO_MANY_IMAGES');
             throw new ConflictException({
                 statusCode: 409,
                 error: 'Conflict',
@@ -61,6 +65,8 @@ export class ListingImagesService {
                 size_bytes: dto.size_bytes,
             }),
         );
+
+        this.imageMetrics.uploadUrlIssued();
 
         return {
             image_id: image.id,
@@ -109,6 +115,12 @@ export class ListingImagesService {
             rejection_message: result.rejection_message ?? null,
         });
 
+        this.imageMetrics.processingResult(result.status, result.rejection_code, result.size_bytes);
+        // Only the first result: an overwrite minutes later says nothing about processing time
+        if (image.status === ListingImageStatus.PENDING) {
+            this.imageMetrics.firstResult(result.status, (Date.now() - image.created_at.getTime()) / 1000);
+        }
+
         // An overwrite that got rejected would leave the earlier thumbnail behind
         if (image.thumbnail_key && image.thumbnail_key !== result.thumbnail_key) {
             await this.removeObjects([image.thumbnail_key]);
@@ -121,6 +133,7 @@ export class ListingImagesService {
 
         await this.imageRepository.delete(image.id);
         await this.removeObjects(this.objectKeys([image]));
+        this.imageMetrics.imageDeleted();
     }
 
     // Public listing data only ever shows images that passed validation.

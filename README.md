@@ -263,6 +263,7 @@ Search is combined with filters (category, brand, size, condition, price range, 
 - WebSocket messages sent counter
 - WebSocket message processing duration histogram
 - Notification type counter
+- Listing images: upload URLs handed out, refused uploads by code, Lambda results by status and code, time to first result, image size, deleted images, and images stored by status
 
 **Logs:**
 - Structured logging via Winston
