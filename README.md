@@ -372,6 +372,68 @@ All runs passed all thresholds:
 
 ---
 
+## Short Load Test Results (with listing images)
+
+A short run on a laptop (2026-11-05) that also tests the listing images flow: presigned upload to S3 on Floci, the image-processor Lambda, and thumbnails. It used much less load than the runs above, so the numbers can't be compared with them.
+
+| Metric             | Value                 |
+| ------------------ | --------------------- |
+| Duration           | About 10 minutes      |
+| Peak virtual users | 15 (10 HTTP + 5 WS)   |
+| HTTP requests      | 8,488 (14.09 req/s)   |
+| Failed requests    | 0                     |
+| Checks             | 10,397 passed, 0 failed |
+| Breached thresholds | 0                    |
+| Iterations         | 531 (0.88/s)          |
+| Data received      | 16.90 MB              |
+| Data sent          | 3.50 MB               |
+
+**Response times (ms)**
+
+| Metric                   | avg      | min      | med      | max      | p90      | p95      |
+| ------------------------ | -------- | -------- | -------- | -------- | -------- | -------- |
+| http_req_duration        | 6.82     | 0.74     | 6.18     | 351.99   | 11.76    | 13.50    |
+| listing created          | 9.01     | 4.06     | 8.84     | 73.05    | 11.78    | 12.64    |
+| listing details          | 3.03     | 0.74     | 2.36     | 26.37    | 5.63     | 7.44     |
+| user details             | 6.73     | 2.44     | 5.97     | 40.94    | 9.28     | 12.61    |
+| user updated             | 12.53    | 4.90     | 11.51    | 351.99   | 14.21    | 16.32    |
+| image upload URL         | 11.75    | 5.41     | 12.12    | 63.97    | 15.26    | 16.98    |
+| image upload to S3       | 2.80     | 1.30     | 2.79     | 66.65    | 3.57     | 3.81     |
+| image processing         | 1,013.36 | 1,003.00 | 1,008.00 | 3,019.00 | 1,011.00 | 1,012.00 |
+| thumbnail download       | 1.65     | 0.77     | 1.77     | 6.90     | 2.09     | 2.24     |
+| listing images read      | 6.18     | 3.10     | 5.79     | 18.66    | 9.05     | 10.68    |
+| ws_connecting            | 1.88     | 0.94     | 1.87     | 7.20     | 2.10     | 2.27     |
+| ws_session_duration      | 10.32    | 5.64     | 10.10    | 61.51    | 11.95    | 13.10    |
+
+> Image processing is measured by polling once per second, so about 1 second is the shortest time this test can record. The Lambda may be faster than that.
+
+**Listing images**
+
+| Metric                        | Count |
+| ----------------------------- | ----- |
+| Upload URLs created           | 551   |
+| Images uploaded to S3         | 551   |
+| Valid images ready            | 455   |
+| Fake images rejected          | 96    |
+| Oversized images refused      | 455   |
+| Thumbnails downloaded         | 455   |
+| Valid images ready rate       | 100%  |
+
+**Other counters**
+
+| Metric                     | Count |
+| -------------------------- | ----- |
+| Listings created           | 455   |
+| Conversations created      | 455   |
+| Listing searches           | 455   |
+| Chat messages sent         | 76    |
+| Chat messages received     | 76    |
+| WebSocket sessions         | 76    |
+| WebSocket messages sent    | 228   |
+| WebSocket messages received | 304  |
+
+---
+
 
 ## Getting Started
 
