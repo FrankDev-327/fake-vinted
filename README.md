@@ -152,6 +152,89 @@ Migrations are managed with TypeORM CLI and run automatically on service startup
 
 ---
 
+## Listing Images
+
+Images go straight from the client to S3, so they never pass through nginx, the gateway or the listing service. S3 then triggers a Lambda that checks the real file and creates a thumbnail. S3 runs the Lambda in the background, so the client polls for the result.
+
+```mermaid
+sequenceDiagram
+    participant C as Client
+    participant G as nginx + Gateway
+    participant L as Listing
+    participant P as Postgres
+    participant S as S3 (Floci)
+    participant F as Lambda (Floci)
+
+    Note over C,P: 1. Ask to upload
+    C->>G: POST /listing/:id/images/upload-url + JWT
+    G->>L: same body + x-user-id
+    L->>L: owner + instant checks
+    L->>P: INSERT row as pending
+    L-->>C: 201 image_id + upload_url, or 400 with errors
+
+    Note over C,S: 2. Upload directly to S3
+    C->>S: PUT image bytes
+
+    Note over S,F: 3. Lambda checks the real file
+    S-)F: ObjectCreated event (listings/ only)
+    F->>S: read size, then file
+    F->>F: validate
+
+    alt passes
+        F->>S: PUT thumbnails/
+        F->>L: POST processing-result: ready + thumbnail_key
+        L->>P: UPDATE row to ready
+    else fails
+        F->>L: POST processing-result: rejected + code + message
+        L->>P: UPDATE row to rejected
+        F->>S: DELETE file
+    end
+
+    Note over C,P: 4. Poll for the result
+    C->>G: GET /listing/:id/images/:imageId
+    G->>L: same request + x-user-id
+    L->>P: read row
+    L-->>C: status + message + urls
+    G->>G: if not pending, clear Redis cache
+```
+
+If the Lambda can't report to the listing service, it throws and Floci retries it.
+
+### Image states
+
+```mermaid
+stateDiagram-v2
+    [*] --> pending: upload-url
+    pending --> ready: all checks pass
+    pending --> rejected: a check fails
+    ready --> rejected: bad overwrite
+    rejected --> ready: good overwrite
+```
+
+- **pending:** hidden from listings and search.
+- **ready:** shown in listings and search, with `url` and `thumbnail_url`.
+- **rejected:** the file is deleted, and the reason stays on the row.
+
+The upload URL stays valid for 5 minutes, so an image can be replaced during that time, and the latest result wins. A row still pending after 5 minutes stays pending, and its message asks the user to upload again.
+
+### Validation
+
+| Check | Code | Instant | Lambda |
+| ----- | ---- | ------- | ------ |
+| Extension isn't `.jpg` or `.png` | `INVALID_EXTENSION` | ✅ | |
+| Content type isn't `image/jpeg` or `image/png` | `INVALID_CONTENT_TYPE` | ✅ | |
+| Size missing or not above 0 | `INVALID_SIZE` | ✅ | |
+| Extension or real format doesn't match the type | `TYPE_MISMATCH` | ✅ | ✅ |
+| Over 4 MB | `FILE_TOO_LARGE` | ✅ | ✅ |
+| Listing already has 10 images | `TOO_MANY_IMAGES` | ✅ | |
+| Empty file | `EMPTY_FILE` | | ✅ |
+| Not really a JPG or PNG | `UNSUPPORTED_FORMAT` | | ✅ |
+| Under 200x200 pixels | `IMAGE_TOO_SMALL` | | ✅ |
+| Over 8000x8000 pixels | `IMAGE_TOO_LARGE` | | ✅ |
+| Damaged file | `CORRUPT_IMAGE` | | ✅ |
+
+---
+
 ## Full-Text Search
 
 Listings use PostgreSQL native full-text search instead of Elasticsearch, demonstrating that PostgreSQL is more than capable for this use case:
