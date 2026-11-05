@@ -1,5 +1,6 @@
-import { Injectable, BadGatewayException } from '@nestjs/common';
+import { Injectable, BadGatewayException, HttpException } from '@nestjs/common';
 import { HttpService, } from '@nestjs/axios';
+import { isAxiosError } from 'axios';
 import { firstValueFrom } from 'rxjs';
 import { Logs } from '../loggers/loggers.service';
 
@@ -7,6 +8,24 @@ import { Logs } from '../loggers/loggers.service';
 export class AxiosServiceService {
     constructor(private readonly httpService: HttpService,
         private readonly logs: Logs) { }
+
+    // Unlike the helpers below, keeps the upstream's 4xx instead of turning it into a 502.
+    async forward(method: 'post' | 'delete', url: string, data: any, headers: Record<string, string>): Promise<any> {
+        try {
+            const { data: responseData } = await firstValueFrom(
+                this.httpService.request({ method, url, data, headers })
+            );
+            return responseData;
+        } catch (error) {
+            const upstream = isAxiosError(error) ? error.response : undefined;
+            if (upstream && upstream.status < 500) {
+                throw new HttpException(upstream.data, upstream.status);
+            }
+
+            this.logs.error(`Error in ${method.toUpperCase()} request to ${url}: ${(error as Error).message}`, error);
+            throw new BadGatewayException();
+        }
+    }
 
     async get(url: string, headers?: Record<string, string>): Promise<any> {
         try {

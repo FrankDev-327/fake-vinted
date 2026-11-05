@@ -3,7 +3,6 @@ import {
     IsNumber,
     IsEnum,
     IsOptional,
-    IsArray,
     IsPositive,
     MinLength,
     MaxLength,
@@ -59,11 +58,6 @@ export class UpdateListingDto {
     @IsEnum(ListingStatus)
     @IsOptional()
     status?: ListingStatus;
-
-    @IsArray()
-    @IsString({ each: true })
-    @IsOptional()
-    images?: string[];
 
     @IsString()
     @IsOptional()

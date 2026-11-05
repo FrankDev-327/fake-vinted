@@ -196,7 +196,6 @@ export function httpTest(data) {
         size: randomItem(sizes),
         condition: randomItem(conditions),
         status: 'available',
-        images: ['https://example.com/image1.jpg'],
         location: 'Zagreb',
       }),
       { headers },

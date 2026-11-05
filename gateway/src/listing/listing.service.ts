@@ -6,6 +6,7 @@ import { AxiosServiceService } from '../axios-service/axios-service.service';
 import { ConfigService } from '@nestjs/config';
 import { Logs } from '../loggers/loggers.service';
 import { SearchListingDto } from './dto/search.grossary-dto';
+import { ConfirmImageDto, CreateUploadUrlDto } from './dto/listing-image.dto';
 import { RedisCachingService } from '../redis_caching/redis_caching.service';
 
 @Injectable()
@@ -126,6 +127,33 @@ export class ListingService {
 
             throw new BadGatewayException((error as Error).message);
         }
+    }
+
+    async createImageUploadUrl(listingId: number, userId: number, body: CreateUploadUrlDto): Promise<any> {
+        return await this.axiosService.forward('post', this.imagesUrl(listingId, 'upload-url'), body, this.imageHeaders(userId));
+    }
+
+    async confirmImage(listingId: number, userId: number, body: ConfirmImageDto): Promise<any> {
+        const response = await this.axiosService.forward('post', this.imagesUrl(listingId), body, this.imageHeaders(userId));
+        await this.invalidateListingCache(listingId, userId);
+        return response;
+    }
+
+    async deleteImage(listingId: number, imageId: number, userId: number): Promise<void> {
+        await this.axiosService.forward('delete', this.imagesUrl(listingId, String(imageId)), undefined, this.imageHeaders(userId));
+        await this.invalidateListingCache(listingId, userId);
+    }
+
+    private imagesUrl(listingId: number, path = ''): string {
+        return `${this.configService.get<string>('MS_LISTING_URL')}/glossaries/${listingId}/images/${path}`;
+    }
+
+    private imageHeaders(userId: number): Record<string, string> {
+        return { 'Content-Type': 'application/json', 'x-user-id': String(userId) };
+    }
+
+    private async invalidateListingCache(listingId: number, userId: number): Promise<void> {
+        await this.redisCachingService.del(`listing-detail-${listingId}`, `glossaries-${userId}`);
     }
 
     async searchListings(query: SearchListingDto): Promise<any> {

@@ -48,8 +48,18 @@ services:
       - "4001:4001"
     depends_on:
       - db
+      - floci
     env_file:
       - ./listing/.env
+    environment:
+      S3_ENDPOINT: http://floci:4566
+      # presigned and image URLs are opened by clients outside the docker network
+      S3_PUBLIC_ENDPOINT: ${S3_PUBLIC_ENDPOINT:-http://localhost:4566}
+      S3_BUCKET: fake-vinted-listing-images
+      S3_REGION: us-east-1
+      # Floci doesn't validate these, the SDK just needs some value to sign with
+      AWS_ACCESS_KEY_ID: test
+      AWS_SECRET_ACCESS_KEY: test
     networks:
       - listing_network
       - users_network
@@ -139,20 +149,6 @@ services:
       - grafana
     restart: unless-stopped
 
-  n8n:
-    image: n8nio/n8n
-    container_name: n8n
-    user: "0:0"
-    ports:
-      - "5678:5678"
-    environment:
-      - ./.env
-    volumes:
-      - ./n8n_data:/home/node/.n8n
-    networks:
-      - n8n 
-    restart: unless-stopped
-
   pushgateway:
     image: prom/pushgateway
     container_name: pushgateway
@@ -220,34 +216,23 @@ services:
       - grafana
       - db_network
 
-  elasticsearch:
-    image: docker.elastic.co/elasticsearch/elasticsearch:8.13.0
-    container_name: elasticsearch
-    environment:
-      - discovery.type=single-node
-      - ES_JAVA_OPTS=-Xms512m -Xmx512m
-      - xpack.security.enabled=false  
+  floci:
+    # the -compat image bundles the aws CLI used by the init hook
+    image: floci/floci:latest-compat
+    container_name: fake_vinted_floci
     ports:
-      - "9200:9200"
+      - "4566:4566"
+    environment:
+      FLOCI_HOSTNAME: floci
+      FLOCI_STORAGE_MODE: persistent
+      FLOCI_STORAGE_PERSISTENT_PATH: /app/data
+      S3_BUCKET: fake-vinted-listing-images
     volumes:
-      - elasticsearch_data:/usr/share/elasticsearch/data
+      - floci_data:/app/data
+      - ./floci/init/ready.d:/etc/floci/init/ready.d:ro
     networks:
-      - grafana
-      - elascticsearch_network
-    restart: always
-
-  kibana:
-    image: docker.elastic.co/kibana/kibana:8.13.0
-    container_name: kibana
-    environment:
-      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
-    ports:
-      - "5601:5601"
-    depends_on:
-      - elasticsearch
-    networks:
-      - elascticsearch_network
-    restart: always
+      - listing_network
+    restart: unless-stopped
 
   redis:
     image: redis:7-alpine
@@ -302,8 +287,6 @@ services:
     container_name: fake_vinted_k6
     profiles:
       - loadtest
-    # required for the entrypoint's `ip addr add`, which binds the --local-ips
-    # pool so nginx sees a distinct source IP per VU instead of one shared IP
     cap_add:
       - NET_ADMIN
     depends_on:
@@ -325,9 +308,8 @@ services:
 
 volumes:
   loki_data:
-  n8n_data:
   pg_db_data:
-  elasticsearch_data:
+  floci_data:
   grafana_data:
   prometheus_data:
   redis_data:
@@ -347,11 +329,7 @@ networks:
     driver: bridge
   users_network:
     driver: bridge
-  n8n:
-    driver: bridge
   grafana:
-    driver: bridge
-  elascticsearch_network:
     driver: bridge
   db_network:
     driver: bridge

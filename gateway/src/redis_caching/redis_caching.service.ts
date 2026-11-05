@@ -35,6 +35,15 @@ export class RedisCachingService {
         }
     }
 
+    async del(...keys: string[]): Promise<void> {
+        try {
+            await this.redis.del(...keys);
+        } catch (error) {
+            this.logService.error(`Error deleting the caching: ${(error as Error).message}`);
+            throw new BadGatewayException((error as Error).message);
+        }
+    }
+
     async get(key: string) {
         try {
             return await this.redis.get(key);

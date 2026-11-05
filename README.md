@@ -63,6 +63,7 @@ Client ──► Chat Service       Chat ──► notifications_queue ──►
 | Loki          | 3100         | Log aggregation                            |
 | Grafana Alloy | 12345        | Telemetry collector                        |  |
 | Pushgateway   | 9091         | Prometheus push metrics                    |
+| Floci         | 4566         | Local AWS emulator (S3 for listing images) |
 
 ---
 
@@ -437,6 +438,9 @@ fake-vinted/
 | GET    | /listing/user/:userId | ✅    | Get listings by user                  |
 | PATCH  | /listing/:id          | ✅    | Update listing                        |
 | DELETE | /listing/:id          | ✅    | Delete listing                        |
+| POST   | /listing/:id/images/upload-url | ✅ | Get a presigned S3 upload URL (owner only) |
+| POST   | /listing/:id/images   | ✅    | Link an uploaded image to the listing (owner only) |
+| DELETE | /listing/:id/images/:imageId | ✅ | Delete a listing image (owner only) |
 
 ### Chat (HTTP)
 | Method | Endpoint                                    | Auth | Description               |

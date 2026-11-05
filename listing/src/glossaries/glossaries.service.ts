@@ -6,11 +6,13 @@ import { LogsService } from '../loggers/logs.service';
 import { CreateListingDto } from './dto/create.glossary.dto';
 import { UpdateListingDto } from './dto/update.glossary.dto';
 import { SearchListingDto } from './dto/search.grossary-dto';
+import { ListingImagesService } from './listing-images.service';
 
 @Injectable()
 export class GlossariesService {
     constructor(
         private readonly logService: LogsService,
+        private readonly listingImagesService: ListingImagesService,
         @InjectRepository(ListingEntity) private readonly listingRepository: Repository<ListingEntity>
     ) { }
 
@@ -46,7 +48,11 @@ export class GlossariesService {
 
     async findById(id: number): Promise<ListingEntity | null> {
         try {
-            return await this.listingRepository.findOneBy({ id });
+            return await this.listingRepository.findOne({
+                where: { id },
+                relations: { images: true },
+                order: { images: { id: 'ASC' } },
+            });
         } catch (error) {
             this.logService.error(`Error getting listing item: ${(error as Error).message}`);
             throw new BadGatewayException((error as Error).message);
@@ -56,7 +62,8 @@ export class GlossariesService {
     async findAll(): Promise<ListingEntity[]> {
         try {
             return await this.listingRepository.find({
-                order: { created_at: 'DESC' }
+                relations: { images: true },
+                order: { created_at: 'DESC', images: { id: 'ASC' } }
             });
         } catch (error) {
             this.logService.error(`Error finding listings: ${(error as Error).message}`);
@@ -66,7 +73,11 @@ export class GlossariesService {
 
     async findByUserId(userId: number): Promise<ListingEntity[]> {
         try {
-            return await this.listingRepository.findBy({ user_id: userId });
+            return await this.listingRepository.find({
+                where: { user_id: userId },
+                relations: { images: true },
+                order: { images: { id: 'ASC' } },
+            });
         } catch (error) {
             this.logService.error(`Error finding listings by user: ${(error as Error).message}`);
             throw new BadGatewayException((error as Error).message);
@@ -80,7 +91,9 @@ export class GlossariesService {
                 throw new NotFoundException('Listing not found');
             }
 
+            const imageKeys = await this.listingImagesService.findKeysByListing(id);
             await this.listingRepository.delete(id);
+            await this.listingImagesService.removeObjects(imageKeys);
         } catch (error) {
             if (error instanceof NotFoundException) {
                 throw new NotFoundException((error as Error).message);
@@ -151,6 +164,9 @@ export class GlossariesService {
 
             const [data, total] = await query.getManyAndCount();
 
+            // loaded separately: a join here would make skip/take paginate over joined rows
+            await this.listingImagesService.attachImages(data);
+
             return { data, total };
         } catch (error) {
             this.logService.error(`Error searching listings: ${(error as Error).message}`);
@@ -160,7 +176,9 @@ export class GlossariesService {
 
     async truncateListinsTable(): Promise<void> {
         try {
+            const imageKeys = await this.listingImagesService.findAllKeys();
             await this.listingRepository.deleteAll();
+            await this.listingImagesService.removeObjects(imageKeys);
         } catch (error) {
             if (error instanceof NotFoundException) {
                 throw new NotFoundException((error as Error).message);

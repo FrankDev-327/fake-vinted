@@ -67,6 +67,5 @@ notifications/.prettiercache
 
 user_data
 gateway_data
-n8n_data
 
 .env

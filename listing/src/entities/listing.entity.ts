@@ -3,8 +3,10 @@ import {
     PrimaryGeneratedColumn,
     Column,
     CreateDateColumn,
+    OneToMany,
     UpdateDateColumn,
 } from 'typeorm';
+import { ListingImageEntity } from './listing-image.entity';
 
 export enum ListingCondition {
     NEW = 'new',
@@ -59,8 +61,8 @@ export class ListingEntity {
     })
     status: ListingStatus;
 
-    @Column({ type: 'simple-array', nullable: true })
-    images: string[];
+    @OneToMany(() => ListingImageEntity, (image) => image.listing)
+    images: ListingImageEntity[];
 
     @Column({ nullable: true })
     location: string;

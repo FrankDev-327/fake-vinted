@@ -8,7 +8,8 @@ import { UpdateListingDto } from './dto/update.listing.dto';
 import { ListingService } from './listing.service';
 import { JwtguardGuard } from '../jwtguard/jwtguard.guard';
 import { SearchListingDto } from './dto/search.grossary-dto';
-import { Body, Controller, Param, Post, Put, Get, UseGuards, Delete, Patch, Query } from '@nestjs/common';
+import { ConfirmImageDto, CreateUploadUrlDto } from './dto/listing-image.dto';
+import { Body, Controller, Param, Post, Put, Get, UseGuards, Delete, Patch, Query, Req, ParseIntPipe } from '@nestjs/common';
 
 @ApiTags('Listing')
 @Controller('listing')
@@ -42,6 +43,39 @@ export class ListingController {
     @ApiBadRequestResponse({ description: 'Error getting listings by user.' })
     async findByUserId(@Param('user_id') user_id: number): Promise<any[]> {
         return await this.listingService.findByUserId(user_id);
+    }
+
+    @UseGuards(JwtguardGuard)
+    @Post(':id/images/upload-url')
+    @ApiOperation({ summary: 'Get a presigned URL to upload a listing image straight to S3' })
+    async createImageUploadUrl(
+        @Param('id', ParseIntPipe) id: number,
+        @Req() req: any,
+        @Body() body: CreateUploadUrlDto,
+    ): Promise<any> {
+        return await this.listingService.createImageUploadUrl(id, req.user.id, body);
+    }
+
+    @UseGuards(JwtguardGuard)
+    @Post(':id/images')
+    @ApiOperation({ summary: 'Link an image to the listing once it has been uploaded to S3' })
+    async confirmImage(
+        @Param('id', ParseIntPipe) id: number,
+        @Req() req: any,
+        @Body() body: ConfirmImageDto,
+    ): Promise<any> {
+        return await this.listingService.confirmImage(id, req.user.id, body);
+    }
+
+    @UseGuards(JwtguardGuard)
+    @Delete(':id/images/:imageId')
+    @ApiOperation({ summary: 'Delete a listing image' })
+    async deleteImage(
+        @Param('id', ParseIntPipe) id: number,
+        @Param('imageId', ParseIntPipe) imageId: number,
+        @Req() req: any,
+    ): Promise<void> {
+        return await this.listingService.deleteImage(id, imageId, req.user.id);
     }
 
     // dynamic routes after static ones
