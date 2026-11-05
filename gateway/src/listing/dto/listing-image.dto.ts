@@ -2,11 +2,12 @@ import { ApiProperty } from '@nestjs/swagger';
 
 // Validated by the listing service, which owns the rules. The gateway passes its 400s through.
 export class CreateUploadUrlDto {
-    @ApiProperty({ enum: ['image/jpeg', 'image/png', 'image/webp'] })
-    content_type: string;
-}
+    @ApiProperty({ example: 'jacket.jpg', description: 'Must end in .jpg or .png' })
+    file_name: string;
 
-export class ConfirmImageDto {
-    @ApiProperty({ example: 'listings/1/3f8a1c2e-0000-4000-8000-000000000000.jpg' })
-    s3_key: string;
+    @ApiProperty({ enum: ['image/jpeg', 'image/png'] })
+    content_type: string;
+
+    @ApiProperty({ example: 1048576, description: 'File size in bytes, 4 MB at most' })
+    size_bytes: number;
 }

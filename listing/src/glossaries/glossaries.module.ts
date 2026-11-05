@@ -3,6 +3,7 @@ import { GlossariesService } from './glossaries.service';
 import { GlossariesController } from './glossaries.controller';
 import { ListingEntity } from '../entities/listing.entity';
 import { ListingImageEntity } from '../entities/listing-image.entity';
+import { InternalImagesController } from './internal-images.controller';
 import { ListingImagesController } from './listing-images.controller';
 import { ListingImagesService } from './listing-images.service';
 import { S3Service } from '../s3/s3.service';
@@ -16,6 +17,6 @@ import { LogsService } from '../loggers/logs.service';
     provide: LogsService,
     useValue: new LogsService(GlossariesService.name)
   }],
-  controllers: [GlossariesController, ListingImagesController]
+  controllers: [GlossariesController, ListingImagesController, InternalImagesController]
 })
 export class GlossariesModule { }

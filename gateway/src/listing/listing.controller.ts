@@ -8,7 +8,7 @@ import { UpdateListingDto } from './dto/update.listing.dto';
 import { ListingService } from './listing.service';
 import { JwtguardGuard } from '../jwtguard/jwtguard.guard';
 import { SearchListingDto } from './dto/search.grossary-dto';
-import { ConfirmImageDto, CreateUploadUrlDto } from './dto/listing-image.dto';
+import { CreateUploadUrlDto } from './dto/listing-image.dto';
 import { Body, Controller, Param, Post, Put, Get, UseGuards, Delete, Patch, Query, Req, ParseIntPipe } from '@nestjs/common';
 
 @ApiTags('Listing')
@@ -57,14 +57,14 @@ export class ListingController {
     }
 
     @UseGuards(JwtguardGuard)
-    @Post(':id/images')
-    @ApiOperation({ summary: 'Link an image to the listing once it has been uploaded to S3' })
-    async confirmImage(
+    @Get(':id/images/:imageId')
+    @ApiOperation({ summary: 'Get an image status: pending, ready, or rejected with the reason' })
+    async getImage(
         @Param('id', ParseIntPipe) id: number,
+        @Param('imageId', ParseIntPipe) imageId: number,
         @Req() req: any,
-        @Body() body: ConfirmImageDto,
     ): Promise<any> {
-        return await this.listingService.confirmImage(id, req.user.id, body);
+        return await this.listingService.getImage(id, imageId, req.user.id);
     }
 
     @UseGuards(JwtguardGuard)

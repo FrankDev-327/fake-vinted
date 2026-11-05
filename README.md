@@ -63,7 +63,7 @@ Client ──► Chat Service       Chat ──► notifications_queue ──►
 | Loki          | 3100         | Log aggregation                            |
 | Grafana Alloy | 12345        | Telemetry collector                        |  |
 | Pushgateway   | 9091         | Prometheus push metrics                    |
-| Floci         | 4566         | Local AWS emulator (S3 for listing images) |
+| Floci         | 4566         | Local AWS emulator (S3 and the image-processor Lambda) |
 
 ---
 
@@ -301,6 +301,15 @@ All runs passed all thresholds:
 
 Each service has its own `.env` file. Required variables per service:
 
+**.env (root)**
+```env
+# shared key the image-processor Lambda uses to report results, compose won't start without it
+# generate one with: openssl rand -hex 32
+IMAGE_PROCESSOR_API_KEY=your_random_key
+# only if the docker socket's group isn't 998, check with: stat -c %g /var/run/docker.sock
+DOCKER_GID=998
+```
+
 **gateway/.env**
 ```env
 PORT=5000
@@ -438,8 +447,8 @@ fake-vinted/
 | GET    | /listing/user/:userId | ✅    | Get listings by user                  |
 | PATCH  | /listing/:id          | ✅    | Update listing                        |
 | DELETE | /listing/:id          | ✅    | Delete listing                        |
-| POST   | /listing/:id/images/upload-url | ✅ | Get a presigned S3 upload URL (owner only) |
-| POST   | /listing/:id/images   | ✅    | Link an uploaded image to the listing (owner only) |
+| POST   | /listing/:id/images/upload-url | ✅ | Validate the image details and get a presigned S3 upload URL (owner only) |
+| GET    | /listing/:id/images/:imageId | ✅ | Image status: pending, ready, or rejected with the reason (owner only) |
 | DELETE | /listing/:id/images/:imageId | ✅ | Delete a listing image (owner only) |
 
 ### Chat (HTTP)

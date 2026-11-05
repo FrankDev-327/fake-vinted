@@ -6,7 +6,7 @@ import { AxiosServiceService } from '../axios-service/axios-service.service';
 import { ConfigService } from '@nestjs/config';
 import { Logs } from '../loggers/loggers.service';
 import { SearchListingDto } from './dto/search.grossary-dto';
-import { ConfirmImageDto, CreateUploadUrlDto } from './dto/listing-image.dto';
+import { CreateUploadUrlDto } from './dto/listing-image.dto';
 import { RedisCachingService } from '../redis_caching/redis_caching.service';
 
 @Injectable()
@@ -133,9 +133,15 @@ export class ListingService {
         return await this.axiosService.forward('post', this.imagesUrl(listingId, 'upload-url'), body, this.imageHeaders(userId));
     }
 
-    async confirmImage(listingId: number, userId: number, body: ConfirmImageDto): Promise<any> {
-        const response = await this.axiosService.forward('post', this.imagesUrl(listingId), body, this.imageHeaders(userId));
-        await this.invalidateListingCache(listingId, userId);
+    async getImage(listingId: number, imageId: number, userId: number): Promise<any> {
+        const response = await this.axiosService.forward('get', this.imagesUrl(listingId, String(imageId)), undefined, this.imageHeaders(userId));
+
+        // The Lambda talks to the listing service directly, so this is the first
+        // time the gateway can tell that a cached listing has gone stale.
+        if (response.status !== 'pending') {
+            await this.invalidateListingCache(listingId, userId);
+        }
+
         return response;
     }
 

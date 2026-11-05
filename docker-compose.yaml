@@ -60,6 +60,7 @@ services:
       # Floci doesn't validate these, the SDK just needs some value to sign with
       AWS_ACCESS_KEY_ID: test
       AWS_SECRET_ACCESS_KEY: test
+      IMAGE_PROCESSOR_API_KEY: ${IMAGE_PROCESSOR_API_KEY:?set it in the root .env}
     networks:
       - listing_network
       - users_network
@@ -217,18 +218,29 @@ services:
       - db_network
 
   floci:
-    # the -compat image bundles the aws CLI used by the init hook
-    image: floci/floci:latest-compat
+    # floci/Dockerfile packages the Lambda on top of the -compat image, which has the aws CLI the hooks use
+    build:
+      context: ./floci
     container_name: fake_vinted_floci
+    # Floci starts Lambdas as containers but runs as non-root, so it needs the group that owns
+    # the docker socket. Check yours with: stat -c %g /var/run/docker.sock
+    group_add:
+      - ${DOCKER_GID:-998}
     ports:
       - "4566:4566"
     environment:
       FLOCI_HOSTNAME: floci
       FLOCI_STORAGE_MODE: persistent
       FLOCI_STORAGE_PERSISTENT_PATH: /app/data
+      FLOCI_INIT_HOOKS_TIMEOUT_SECONDS: 120
+      # the Lambda reports results to the listing service over this network
+      FLOCI_SERVICES_LAMBDA_DOCKER_NETWORK: fake-vinted_listing_network
       S3_BUCKET: fake-vinted-listing-images
+      LISTING_INTERNAL_URL: http://ms_listing:4001
+      IMAGE_PROCESSOR_API_KEY: ${IMAGE_PROCESSOR_API_KEY:?set it in the root .env}
     volumes:
       - floci_data:/app/data
+      - /var/run/docker.sock:/var/run/docker.sock
       - ./floci/init/ready.d:/etc/floci/init/ready.d:ro
     networks:
       - listing_network
@@ -324,6 +336,7 @@ networks:
   chat_network:
     driver: bridge
   listing_network:
+    name: fake-vinted_listing_network
     driver: bridge
   gateway_network:
     driver: bridge

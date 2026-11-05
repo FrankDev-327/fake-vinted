@@ -48,11 +48,11 @@ export class GlossariesService {
 
     async findById(id: number): Promise<ListingEntity | null> {
         try {
-            return await this.listingRepository.findOne({
-                where: { id },
-                relations: { images: true },
-                order: { images: { id: 'ASC' } },
-            });
+            const listing = await this.listingRepository.findOneBy({ id });
+            if (listing) {
+                await this.listingImagesService.attachImages([listing]);
+            }
+            return listing;
         } catch (error) {
             this.logService.error(`Error getting listing item: ${(error as Error).message}`);
             throw new BadGatewayException((error as Error).message);
@@ -61,10 +61,11 @@ export class GlossariesService {
 
     async findAll(): Promise<ListingEntity[]> {
         try {
-            return await this.listingRepository.find({
-                relations: { images: true },
-                order: { created_at: 'DESC', images: { id: 'ASC' } }
+            const listings = await this.listingRepository.find({
+                order: { created_at: 'DESC' }
             });
+            await this.listingImagesService.attachImages(listings);
+            return listings;
         } catch (error) {
             this.logService.error(`Error finding listings: ${(error as Error).message}`);
             throw new BadGatewayException((error as Error).message);
@@ -73,11 +74,9 @@ export class GlossariesService {
 
     async findByUserId(userId: number): Promise<ListingEntity[]> {
         try {
-            return await this.listingRepository.find({
-                where: { user_id: userId },
-                relations: { images: true },
-                order: { images: { id: 'ASC' } },
-            });
+            const listings = await this.listingRepository.findBy({ user_id: userId });
+            await this.listingImagesService.attachImages(listings);
+            return listings;
         } catch (error) {
             this.logService.error(`Error finding listings by user: ${(error as Error).message}`);
             throw new BadGatewayException((error as Error).message);

@@ -11,6 +11,12 @@ import {
 } from 'typeorm';
 import { ListingEntity } from './listing.entity';
 
+export enum ListingImageStatus {
+    PENDING = 'pending',
+    READY = 'ready',
+    REJECTED = 'rejected',
+}
+
 @Entity('listing_images')
 export class ListingImageEntity {
     @PrimaryGeneratedColumn()
@@ -33,15 +39,44 @@ export class ListingImageEntity {
     @Column()
     size_bytes: number;
 
+    @Column({
+        type: 'enum',
+        enum: ListingImageStatus,
+        enumName: 'listing_image_status',
+        default: ListingImageStatus.PENDING,
+    })
+    status: ListingImageStatus;
+
+    @Column({ type: 'varchar', nullable: true })
+    rejection_code: string | null;
+
+    @Column({ type: 'varchar', nullable: true })
+    rejection_message: string | null;
+
+    @Column({ type: 'varchar', nullable: true })
+    thumbnail_key: string | null;
+
+    @Column({ type: 'int', nullable: true })
+    width: number | null;
+
+    @Column({ type: 'int', nullable: true })
+    height: number | null;
+
     @CreateDateColumn()
     created_at: Date;
 
-    // Only the key is stored, so moving to another host or a CDN doesn't need a data migration.
+    // Only the keys are stored, so moving to another host or a CDN doesn't need a data migration.
     url: string;
+    thumbnail_url: string | null;
 
     @AfterLoad()
     @AfterInsert()
-    buildUrl(): void {
-        this.url = `${process.env.S3_PUBLIC_ENDPOINT}/${process.env.S3_BUCKET}/${this.s3_key}`;
+    buildUrls(): void {
+        this.url = this.publicUrl(this.s3_key);
+        this.thumbnail_url = this.thumbnail_key ? this.publicUrl(this.thumbnail_key) : null;
+    }
+
+    private publicUrl(key: string): string {
+        return `${process.env.S3_PUBLIC_ENDPOINT}/${process.env.S3_BUCKET}/${key}`;
     }
 }

@@ -5,12 +5,12 @@ import {
     createParamDecorator,
     Delete,
     ExecutionContext,
+    Get,
     Param,
     ParseIntPipe,
     Post,
-    ValidationPipe,
 } from '@nestjs/common';
-import { ConfirmImageDto, CreateUploadUrlDto } from './dto/listing-image.dto';
+import { CreateUploadUrlDto } from './dto/listing-image.dto';
 import { ListingImagesService } from './listing-images.service';
 
 // x-user-id is set by the gateway from the verified JWT.
@@ -30,18 +30,18 @@ export class ListingImagesController {
     createUploadUrl(
         @Param('id', ParseIntPipe) id: number,
         @UserId() userId: number,
-        @Body(new ValidationPipe()) body: CreateUploadUrlDto,
+        @Body() body: CreateUploadUrlDto,
     ) {
-        return this.listingImagesService.createUploadUrl(id, userId, body.content_type);
+        return this.listingImagesService.createUploadUrl(id, userId, body);
     }
 
-    @Post()
-    confirmUpload(
+    @Get(':imageId')
+    getImage(
         @Param('id', ParseIntPipe) id: number,
+        @Param('imageId', ParseIntPipe) imageId: number,
         @UserId() userId: number,
-        @Body(new ValidationPipe()) body: ConfirmImageDto,
     ) {
-        return this.listingImagesService.confirmUpload(id, userId, body.s3_key);
+        return this.listingImagesService.getImage(id, userId, imageId);
     }
 
     @Delete(':imageId')
