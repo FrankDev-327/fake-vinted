@@ -17,9 +17,6 @@ export function imageExtension(contentType: string): string {
     return EXTENSION_BY_CONTENT_TYPE[contentType];
 }
 
-// Runs before the upload, so the user finds out right away. It can only check what the
-// client declares: the image-processor Lambda checks the real file after the upload.
-// Returns every problem at once, so the user doesn't have to fix them one retry at a time.
 export function validateImageUpload(dto: Partial<CreateUploadUrlDto>): ImageValidationError[] {
     const errors: ImageValidationError[] = [];
     const { file_name: fileName, content_type: contentType, size_bytes: size } = dto ?? {};

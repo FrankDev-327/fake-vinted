@@ -24,7 +24,6 @@ export class ListingController {
         return await this.listingService.createListing(body);
     }
 
-    // specific static routes first
     @Delete('truncate')
     @ApiOperation({ summary: 'Truncate listings table' })
     async truncateListingsTable(): Promise<void> {
@@ -78,7 +77,6 @@ export class ListingController {
         return await this.listingService.deleteImage(id, imageId, req.user.id);
     }
 
-    // dynamic routes after static ones
     @UseGuards(JwtguardGuard)
     @Get(':id')
     @ApiOperation({ summary: 'Get listing by id' })

@@ -1,6 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
 
-// Validated by the listing service, which owns the rules. The gateway passes its 400s through.
 export class CreateUploadUrlDto {
     @ApiProperty({ example: 'jacket.jpg', description: 'Must end in .jpg or .png' })
     file_name: string;

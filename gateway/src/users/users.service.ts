@@ -30,7 +30,7 @@ export class UsersService {
             if (error instanceof NotFoundException) {
                 throw new NotFoundException((error as Error).message)
             }
-            throw new BadGatewayException((error as Error).message); //
+            throw new BadGatewayException((error as Error).message);
         }
     }
 
@@ -49,7 +49,7 @@ export class UsersService {
             if (error instanceof NotFoundException) {
                 throw new NotFoundException((error as Error).message)
             }
-            throw new BadGatewayException((error as Error).message); //
+            throw new BadGatewayException((error as Error).message);
         }
     }
 

@@ -107,13 +107,11 @@ export class GlossariesService {
         try {
             const query = this.listingRepository.createQueryBuilder('listing');
 
-            // full text search using tsvector
             if (dto.q) {
                 query.andWhere(
                     `listing.search_vector @@ plainto_tsquery('english', :query)`,
                     { query: dto.q }
                 );
-                // order by relevance when searching
                 query.addSelect(
                     `ts_rank(listing.search_vector, plainto_tsquery('english', :query))`,
                     'rank'
@@ -123,7 +121,6 @@ export class GlossariesService {
                 query.orderBy('listing.created_at', 'DESC');
             }
 
-            // filters
             if (dto.category) {
                 query.andWhere('listing.category = :category', { category: dto.category });
             }
@@ -156,14 +153,12 @@ export class GlossariesService {
                 query.andWhere('listing.location ILIKE :location', { location: `%${dto.location}%` });
             }
 
-            // pagination
             const page = dto.page ?? 1;
             const limit = dto.limit ?? 20;
             query.skip((page - 1) * limit).take(limit);
 
             const [data, total] = await query.getManyAndCount();
 
-            // loaded separately: a join here would make skip/take paginate over joined rows
             await this.listingImagesService.attachImages(data);
 
             return { data, total };

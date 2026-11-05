@@ -13,7 +13,6 @@ import {
 import { CreateUploadUrlDto } from './dto/listing-image.dto';
 import { ListingImagesService } from './listing-images.service';
 
-// x-user-id is set by the gateway from the verified JWT.
 const UserId = createParamDecorator((_: unknown, context: ExecutionContext): number => {
     const userId = Number(context.switchToHttp().getRequest().headers['x-user-id']);
     if (!Number.isInteger(userId)) {

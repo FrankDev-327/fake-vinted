@@ -18,7 +18,7 @@ enum ListingStatus {
 export class SearchListingDto {
     @IsString()
     @IsOptional()
-    q?: string; // search query
+    q?: string;
 
     @IsString()
     @IsOptional()

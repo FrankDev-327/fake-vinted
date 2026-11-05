@@ -42,15 +42,12 @@ const listing_created_trend = new Trend('listing_created_trend', true);
 const listing_getting_details_trend = new Trend('listing_getting_details_trend', true);
 const image_upload_url_trend = new Trend('image_upload_url_trend', true);
 const image_upload_trend = new Trend('image_upload_trend', true);
-// from the end of the upload until the Lambda's result can be read
 const image_processing_trend = new Trend('image_processing_trend', true);
 const image_thumbnail_download_trend = new Trend('image_thumbnail_download_trend', true);
 const listing_images_read_trend = new Trend('listing_images_read_trend', true);
-// how many valid images end up ready, a timeout counts against it
 const image_ready_rate = new Rate('image_ready_rate');
 
 export const options = {
-  // Short run for a laptop: about 10 minutes and few users
   scenarios: {
     http_test: {
       executor: 'ramping-vus',
@@ -77,42 +74,6 @@ export const options = {
       tags: { test_type: 'chat_socket' },
     },
   },
-  // Full load test, commented out for now
-  // scenarios: {
-  //   http_test: {
-  //     executor: 'ramping-vus',
-  //     exec: 'httpTest',
-  //     stages: [
-  //       { duration: '1m', target: 50 },    // warm up
-  //       { duration: '2m', target: 150 },   // ramp up fast
-  //       { duration: '5m', target: 200 },   // sustain high load
-  //       { duration: '3m', target: 300 },   // push hard
-  //       { duration: '10m', target: 300 },  // sustain peak - stress test
-  //       { duration: '3m', target: 400 },   // push to limit
-  //       { duration: '5m', target: 400 },   // sustain limit
-  //       { duration: '3m', target: 400 },   // push to limit
-  //       { duration: '5m', target: 400 },   // sustain limit
-  //       { duration: '1m', target: 0 },
-  //     ],
-  //     tags: { test_type: 'gateway' },
-  //   },
-  //   websocket_test: {
-  //     executor: 'ramping-vus',
-  //     exec: 'wsTest',
-  //     stages: [
-  //       { duration: '1m', target: 50 },    // warm up
-  //       { duration: '2m', target: 100 },   // ramp up
-  //       { duration: '5m', target: 200 },   // sustain
-  //       { duration: '3m', target: 300 },   // push hard
-  //       { duration: '10m', target: 300 },  // sustain peak
-  //       { duration: '3m', target: 300 },   // push hard
-  //       { duration: '10m', target: 300 },  // sustain peak
-  //       { duration: '3m', target: 150 },   // cool down
-  //       { duration: '1m', target: 0 },     // ramp down
-  //     ],
-  //     tags: { test_type: 'chat_socket' },
-  //   },
-  // },
   thresholds: {
     http_req_duration: ['p(95)<500'],
     http_req_failed: ['rate<0.05'],
@@ -127,7 +88,7 @@ export const options = {
 
     'image_upload_url_trend{test_type:gateway}': ['p(95)<900'],
     'image_upload_trend{test_type:gateway}': ['p(95)<900'],
-    'image_processing_trend{test_type:gateway}': ['p(95)<30000'], // the most the test waits for a result
+    'image_processing_trend{test_type:gateway}': ['p(95)<30000'],
     'image_thumbnail_download_trend{test_type:gateway}': ['p(95)<900'],
     'listing_images_read_trend{test_type:gateway}': ['p(95)<900'],
     'image_ready_rate{test_type:gateway}': ['rate>0.95'],
@@ -136,7 +97,6 @@ export const options = {
 
 export function handleSummary(data) {
   return {
-    // 'chat.fake.vinted.html': htmlReport(data), // the full load test's report, don't overwrite it from short runs
     'short.fake.vinted.html': htmlReport(data),
     stdout: textSummary(data, { indent: ' ', enableColors: true }),
   };
@@ -144,12 +104,9 @@ export function handleSummary(data) {
 
 const BASE_URL = 'http://fake-vinted.local/api';
 const CHAT_URL = 'http://fake-vinted.local/socket';
-// Upload and image URLs point at localhost:4566, which inside the k6 container is k6 itself.
-// Swapping the host is fine because Floci doesn't validate signatures by default.
 const S3_URL = __ENV.S3_URL || 'http://localhost:4566';
 const IMAGE_POLL_ATTEMPTS = 30;
 
-// k6/fixtures/test-image.png is a real 300x300 PNG, so it passes every Lambda check
 const VALID_IMAGE = open('./k6/fixtures/test-image.png', 'b');
 const FAKE_IMAGE = 'this is plain text with a .png name, the Lambda has to reject it';
 
@@ -161,7 +118,6 @@ function imageUploadBody(sizeBytes) {
   return JSON.stringify({ file_name: 'k6-test.png', content_type: 'image/png', size_bytes: sizeBytes });
 }
 
-// Uploads a file through the presigned URL, then polls until the Lambda has reported a result
 function uploadImage(listingId, body, sizeBytes, headers) {
   const uploadUrlRes = http.post(`${BASE_URL}/listing/${listingId}/images/upload-url`, imageUploadBody(sizeBytes), { headers });
   check(uploadUrlRes, { 'image upload url created': (r) => r.status === 201 });
@@ -216,7 +172,6 @@ const cities = [
   "Tokyo", "Beijing", "Seoul", "Sydney", "Auckland"
 ];
 
-// --- SETUP: runs once before the test ---
 export function setup() {
   let registerRes;
   registerRes = http.post(
@@ -257,7 +212,6 @@ export function setup() {
     return false;
   }
 
-  // create a conversation to use in ws test
   const createConversationRes = http.post(
     `${BASE_URL}/chat-vinted/conversations`,
     JSON.stringify({
@@ -275,7 +229,6 @@ export function setup() {
   return { token, userId, conversationId };
 }
 
-// --- HTTP TEST ---
 export function httpTest(data) {
   const headers = {
     'Content-Type': 'application/json',
@@ -283,7 +236,6 @@ export function httpTest(data) {
   };
   let createListingRes, listingId;
 
-  // 1. create a listing
   group('testing creating a listing', function () {
     createListingRes = http.post(
       `${BASE_URL}/listing`,
@@ -309,7 +261,6 @@ export function httpTest(data) {
 
   sleep(1);
 
-  // 2. listing images: instant validation, presigned upload and the Lambda's result
   group('testing listing images', function () {
     let imageListingId;
     try {
@@ -319,7 +270,6 @@ export function httpTest(data) {
     }
     if (!imageListingId) return;
 
-    // a 400 is the correct answer here, so it shouldn't count as a failed request
     const tooLargeRes = http.post(
       `${BASE_URL}/listing/${imageListingId}/images/upload-url`,
       imageUploadBody(5 * 1024 * 1024),
@@ -345,7 +295,6 @@ export function httpTest(data) {
       image_thumbnail_download_counter.add(1, { test_type: 'gateway' });
       image_thumbnail_download_trend.add(thumbnailRes.timings.duration, { test_type: 'gateway' });
 
-      // the image has to show up on the listing itself
       const listingRes = http.get(`${BASE_URL}/listing/${imageListingId}`, { headers });
       check(listingRes, {
         'listing shows its image': (r) => r.status === 200 && JSON.parse(r.body).images?.some((i) => i.id === image.id),
@@ -354,7 +303,6 @@ export function httpTest(data) {
       listing_images_read_trend.add(listingRes.timings.duration, { test_type: 'gateway' });
     }
 
-    // every 5th iteration also sends a fake image
     if (__ITER % 5 === 0) {
       const rejected = uploadImage(imageListingId, FAKE_IMAGE, FAKE_IMAGE.length, headers);
       check(rejected, {
@@ -369,7 +317,6 @@ export function httpTest(data) {
 
   sleep(1);
 
-  // 3. get listing by id
   group('testing gettin details of lising', function () {
     try {
       listingId = JSON.parse(createListingRes.body)?.id;
@@ -397,7 +344,6 @@ export function httpTest(data) {
 
   sleep(1);
 
-  // 4. get user by id
   group('testing get user details', function () {
     const getUserRes = http.get(`${BASE_URL}/users/${data.userId}`, { headers });
     check(getUserRes, { 'got user by id': (r) => r.status === 200 });
@@ -408,31 +354,25 @@ export function httpTest(data) {
   sleep(1);
 
 
-  // 3. search listings
   group('testing search listings', function () {
     const searchTerm = randomItem(searchTerms);
     const randomCategory = randomItem(categories);
     const randomCondition = randomItem(conditions);
 
-    // search with different combinations randomly
     const searchVariant = Math.floor(Math.random() * 4);
     let searchUrl;
 
     switch (searchVariant) {
       case 0:
-        // full text search only
         searchUrl = `${BASE_URL}/listing/search?q=${searchTerm}&page=1&limit=10&userId=${data.userId}`;
         break;
       case 1:
-        // search with category filter
         searchUrl = `${BASE_URL}/listing/search?q=${searchTerm}&category=${randomCategory}&page=1&limit=10&userId=${data.userId}`;
         break;
       case 2:
-        // search with price range
         searchUrl = `${BASE_URL}/listing/search?q=${searchTerm}&min_price=10&max_price=80&page=1&limit=10&userId=${data.userId}`;
         break;
       case 3:
-        // search with condition and category
         searchUrl = `${BASE_URL}/listing/search?category=${randomCategory}&condition=${randomCondition}&page=1&limit=20&userId=${data.userId}`;
         break;
     }
@@ -461,7 +401,6 @@ export function httpTest(data) {
   sleep(1);
 
   group('testing updating an user', function () {
-    // 5. update user
     const updateUserRes = http.put(
       `${BASE_URL}/users/${data.userId}`,
       JSON.stringify({ bio: 'Updated bio from k6 test' }),
@@ -475,7 +414,6 @@ export function httpTest(data) {
   sleep(1);
 
   group('testing creating a conversation', function () {
-    // 6. create conversation
     const createConversationRes = http.post(
       `${BASE_URL}/chat-vinted/conversations`,
       JSON.stringify({
@@ -492,7 +430,6 @@ export function httpTest(data) {
 
   sleep(1);
 
-  // 6. get user notifications
   group('testing getting user notifications', function () {
     const getNotificationsRes = http.get(
       `${BASE_URL}/notifications/user/${data.userId}`,
@@ -501,7 +438,6 @@ export function httpTest(data) {
     check(getNotificationsRes, { 'got notifications': (r) => r.status === 200 });
     notification_getting_counter.add(1, { test_type: 'gateway' });
 
-    // if notifications exist mark first one as read
     let notifications = [];
     try {
       notifications = JSON.parse(getNotificationsRes.body);
@@ -531,7 +467,6 @@ export function httpTest(data) {
     check(getNotificationsRes, { 'got notifications': (r) => r.status === 200 });
     notification_getting_counter.add(1, { test_type: 'gateway' });
 
-    // if notifications exist mark first one as read
     const notifications = JSON.parse(getNotificationsRes.body);
     if (Array.isArray(notifications) && notifications.length > 0) {
       const notificationId = notifications[0].id;
@@ -550,7 +485,6 @@ export function httpTest(data) {
 
   sleep(1);
 
-  // 7. mark all notifications as read
   group('testing mark all notifications as read', function () {
     const markAllReadRes = http.patch(
       `${BASE_URL}/notifications/user/${data.userId}/read-all`,
@@ -567,7 +501,6 @@ export function httpTest(data) {
   sleep(1);
 }
 
-// --- WEBSOCKET TEST ---
 export function wsTest(data) {
   const options = {
     path: '/socket.io/',
@@ -585,7 +518,6 @@ export function wsTest(data) {
         console.log(`VU ${__VU} using conversationId: ${data.conversationId}`);
         check(true, { 'socket connected': (v) => v === true });
 
-        // join conversation
         console.log(`${__VU} user wirh conversationI: ${data.conversationId}`);
         socket.emit('joinConversation', data.conversationId);
       });
@@ -594,7 +526,6 @@ export function wsTest(data) {
         check(true, { 'joined conversation': (v) => v === true });
         console.log(`VU ${__VU} joined conversation`, msg);
         console.log(`VU ${__VU} sending message with conversation_id: ${data.conversationId}`);
-        // send message after joining
         socket.emit('sendMessage', {
           conversation_id: data.conversationId,
           sender_id: data.userId,
@@ -635,7 +566,6 @@ export function wsTest(data) {
   });
 }
 
-// --- TEARDOWN ---
 export function teardown(data) {
   console.log('Load test completed!');
 

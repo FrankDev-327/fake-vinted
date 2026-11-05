@@ -1,13 +1,7 @@
-// --- Logging ---
 logging {
   level = "info"
 }
 
-// ###############################
-// #### Metrics Configuration ####
-// ###############################
-
-// Scrape TempMsgChatApp app custom metrics
 prometheus.scrape "fake_vinted" {
   scrape_interval          = "10s"
   scheme                   = "http"
@@ -25,7 +19,6 @@ prometheus.scrape "fake_vinted" {
 
 }
 
-// Scrape Pushgateway app custom metrics
 prometheus.scrape "pushgateway" {
   scrape_interval = "10s"
 
@@ -36,24 +29,16 @@ prometheus.scrape "pushgateway" {
   forward_to = [prometheus.relabel.pushgateway_metrics.receiver]
 }
 
-// ##################################################
-// #### Prometheus relabel Configuration Section ####
-// ##################################################
 prometheus.relabel "pushgateway_metrics" {
   forward_to = [prometheus.remote_write.metrics.receiver]
 }
 
-// --- Remote write to Prometheus ---
 prometheus.remote_write "metrics" {
   endpoint {
     url = "http://prometheus:9090/api/v1/write"
   }
 }
 
-// ###############################
-// #### Loki Configuration ####
-// ###############################
-// Finds the containers through the docker socket, so a new service needs no changes here
 discovery.docker "containers" {
   host = "unix:///var/run/docker.sock"
 }
@@ -61,7 +46,6 @@ discovery.docker "containers" {
 discovery.relabel "containers" {
   targets = discovery.docker.containers.targets
 
-  // only this project's containers
   rule {
     source_labels = ["__meta_docker_container_label_com_docker_compose_project"]
     regex         = "fake-vinted"
@@ -74,39 +58,15 @@ discovery.relabel "containers" {
   }
 }
 
-// Reads what the containers write to stdout and stderr
 loki.source.docker "containers" {
   host       = "unix:///var/run/docker.sock"
   targets    = discovery.relabel.containers.output
   forward_to = [loki.write.default.receiver]
 }
 
-// --- Loki destination ---
 loki.write "default" {
   endpoint {
     url = "http://loki:3100/loki/api/v1/push"
   }
 }
 
-// ###############################################
-// #### Prometheus Postgres Database Configuration #####
-// ###############################################
-
-// Srape Postgres metrics using the Postgres Exporter and forward to Prometheus
-// prometheus.exporter.postgres "postgres_metrics" {
-//   data_source_names = [
-//     "postgresql://" +
-//     env("DB_USER_NAME") + ":" +
-//     env("DB_USER_PASSWORD") + "@" +
-//     env("DATABASE_IP") + ":" +
-//     env("DATABASE_PORT") + "/" +
-//     env("DATABASE") +
-//     "?sslmode=disable",
-//   ]
-// }
-
-// prometheus.scrape "postgres_default" {
-//   targets         = prometheus.exporter.postgres.postgres_metrics.targets
-//   forward_to      = [prometheus.remote_write.metrics.receiver]
-//   scrape_interval = "15s"
-// }

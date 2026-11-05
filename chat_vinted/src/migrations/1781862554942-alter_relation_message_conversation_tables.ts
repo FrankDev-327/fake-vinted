@@ -9,7 +9,6 @@ export class AlterRelationMessageConversationTables1781862554942 implements Migr
                 (fk) => fk.columnNames.indexOf('conversation_id') !== -1,
             );
 
-            // drop it if found
             if (wrongForeignKey) {
                 await queryRunner.dropForeignKey('messages', wrongForeignKey);
             }

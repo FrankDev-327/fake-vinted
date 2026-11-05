@@ -29,8 +29,6 @@ export class ListingImagesService {
         @InjectRepository(ListingImageEntity) private readonly imageRepository: Repository<ListingImageEntity>,
     ) { }
 
-    // The row is created here, before the upload, so it always exists by the time the
-    // Lambda reports its result. Otherwise a fast Lambda could finish with no row to update.
     async createUploadUrl(listingId: number, userId: number, dto: CreateUploadUrlDto) {
         await this.assertOwner(listingId, userId);
 
@@ -103,8 +101,6 @@ export class ListingImagesService {
             throw new NotFoundException('Image not found');
         }
 
-        // Always applied, whatever the current status: the upload URL stays valid for
-        // 5 minutes, so an image that passed can be overwritten with one that doesn't.
         await this.imageRepository.update(image.id, {
             status: result.status,
             size_bytes: result.size_bytes ?? image.size_bytes,
@@ -116,12 +112,10 @@ export class ListingImagesService {
         });
 
         this.imageMetrics.processingResult(result.status, result.rejection_code, result.size_bytes);
-        // Only the first result: an overwrite minutes later says nothing about processing time
         if (image.status === ListingImageStatus.PENDING) {
             this.imageMetrics.firstResult(result.status, (Date.now() - image.created_at.getTime()) / 1000);
         }
 
-        // An overwrite that got rejected would leave the earlier thumbnail behind
         if (image.thumbnail_key && image.thumbnail_key !== result.thumbnail_key) {
             await this.removeObjects([image.thumbnail_key]);
         }
@@ -136,7 +130,6 @@ export class ListingImagesService {
         this.imageMetrics.imageDeleted();
     }
 
-    // Public listing data only ever shows images that passed validation.
     async attachImages(listings: ListingEntity[]): Promise<void> {
         if (listings.length === 0) return;
 
@@ -163,8 +156,6 @@ export class ListingImagesService {
         return this.objectKeys(await this.imageRepository.find());
     }
 
-    // Runs after the DB delete: a failure leaves an orphaned object, never a row
-    // pointing at an image that's gone.
     async removeObjects(keys: string[]): Promise<void> {
         try {
             await this.s3Service.deleteObjects(keys);
@@ -191,7 +182,6 @@ export class ListingImagesService {
             : 'Waiting for the upload to be received and checked.';
     }
 
-    // Rejected images don't count, and neither do pending ones whose upload URL has expired.
     private countActiveImages(listingId: number): Promise<number> {
         const uploadUrlStillValid = new Date(Date.now() - UPLOAD_URL_TTL_SECONDS * 1000);
         return this.imageRepository.count({

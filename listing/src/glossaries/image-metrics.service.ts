@@ -21,7 +21,6 @@ export class ImageMetricsService {
         registers: [this.registry],
     });
 
-    // code is "none" for ready images. Rejection codes are a short fixed list, so this stays low-cardinality.
     private readonly processingResults = new Counter({
         name: 'listing_image_processing_results_total',
         help: 'Results reported by the image-processor Lambda',
@@ -29,7 +28,6 @@ export class ImageMetricsService {
         registers: [this.registry],
     });
 
-    // Includes the client's upload time, since the listing service can't see when the upload ended.
     private readonly timeToResult = new Histogram({
         name: 'listing_image_time_to_result_seconds',
         help: 'Time from handing out the upload URL to the first Lambda result',
@@ -57,8 +55,6 @@ export class ImageMetricsService {
         this.registry.setDefaultLabels({ app: 'listing' });
         collectDefaultMetrics({ register: this.registry });
 
-        // Read from the DB on each scrape, so it stays right across restarts.
-        // A pending count that keeps growing means uploads or the Lambda are failing.
         const imageRepositoryRef = this.imageRepository;
         new Gauge({
             name: 'listing_images',

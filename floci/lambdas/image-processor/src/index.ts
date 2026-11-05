@@ -11,20 +11,14 @@ import { assertAllowedImage, assertAllowedSize, ImageRejection, MAX_DIMENSION } 
 
 const THUMBNAIL_WIDTH = 400;
 
-// Floci injects AWS_ENDPOINT_URL and needs path-style URLs. Real AWS needs neither.
 const s3 = new S3Client({ forcePathStyle: Boolean(process.env.AWS_ENDPOINT_URL) });
 
 type ProcessingResult =
     | { s3_key: string; status: 'ready'; size_bytes: number; width: number; height: number; thumbnail_key: string }
     | { s3_key: string; status: 'rejected'; rejection_code: string; rejection_message: string };
 
-// S3 calls this asynchronously, so nothing returned here reaches the user. Results go
-// to the listing service, where the client reads them. A rejected image is an expected
-// outcome and must not throw: throwing is what makes Lambda retry, so it's only for
-// failures a retry could fix, like the listing service being down.
 export const handler = async (event: S3Event): Promise<void> => {
     for (const record of event.Records) {
-        // S3 URL-encodes keys in events and turns spaces into "+"
         const key = decodeURIComponent(record.s3.object.key.replace(/\+/g, ' '));
         await processImage(record.s3.bucket.name, key);
     }
@@ -38,7 +32,6 @@ async function processImage(bucket: string, key: string): Promise<void> {
     }
 
     try {
-        // Checked before downloading, so an oversized file never gets loaded into memory
         assertAllowedSize(object.ContentLength ?? 0);
 
         const image = await downloadObject(bucket, key);
@@ -63,7 +56,6 @@ async function processImage(bucket: string, key: string): Promise<void> {
         if (!(error instanceof ImageRejection)) throw error;
 
         console.log(`Rejected ${key}: ${error.code}`);
-        // Report first: if this fails and Lambda retries, the object must still be there.
         await reportResult({
             s3_key: key,
             status: 'rejected',
@@ -85,8 +77,6 @@ async function readMetadata(image: Buffer): Promise<sharp.Metadata> {
 async function createThumbnail(bucket: string, key: string, image: Buffer): Promise<string> {
     let thumbnail: Buffer;
     try {
-        // Decodes every pixel, which is what catches files with a valid header but broken data.
-        // rotate() applies the EXIF orientation, so phone photos don't come out sideways.
         thumbnail = await sharp(image, { failOn: 'error', limitInputPixels: MAX_DIMENSION * MAX_DIMENSION })
             .rotate()
             .resize({ width: THUMBNAIL_WIDTH, withoutEnlargement: true })
@@ -103,7 +93,6 @@ async function createThumbnail(bucket: string, key: string, image: Buffer): Prom
     return thumbnailKey;
 }
 
-/** Returns false when the listing service no longer has a row for this image. */
 async function reportResult(result: ProcessingResult): Promise<boolean> {
     const response = await fetch(`${process.env.LISTING_INTERNAL_URL}/internal/images/processing-result`, {
         method: 'POST',

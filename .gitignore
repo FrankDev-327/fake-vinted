@@ -1,4 +1,3 @@
-#gateway services
 gateway/node_modules
 gateway/dist
 gateway/.env
@@ -10,9 +9,7 @@ gateway/logs
 gateway/.eslintrc*
 gateway/.prettier*
 gateway/.prettiercache
-#gateway services
 
-#user services
 users/node_modules
 users/dist
 users/.env
@@ -21,9 +18,7 @@ users/build
 users/logs
 users/.eslintrc*
 users/.prettier*
-#users services
 
-#listing services
 listing/node_modules
 listing/dist
 listing/.env
@@ -35,9 +30,7 @@ listing/logs
 listing/.eslintrc*
 listing/.prettier*
 listing/.prettiercache
-#listing services
 
-#chat_vinted services
 chat_vinted/node_modules
 chat_vinted/dist
 chat_vinted/.env
@@ -49,9 +42,7 @@ chat_vinted/logs
 chat_vinted/.eslintrc*
 chat_vinted/.prettier*
 chat_vinted/.prettiercache
-#chat_vinted services
 
-#notifications services
 notifications/node_modules
 notifications/dist
 notifications/.env
@@ -63,7 +54,6 @@ notifications/logs
 notifications/.eslintrc*
 notifications/.prettier*
 notifications/.prettiercache
-#notifications services
 
 user_data
 gateway_data

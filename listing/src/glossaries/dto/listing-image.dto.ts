@@ -7,7 +7,6 @@ export class CreateUploadUrlDto {
     size_bytes: number;
 }
 
-// Sent by the image-processor Lambda
 export class ProcessingResultDto {
     @IsString()
     s3_key: string;

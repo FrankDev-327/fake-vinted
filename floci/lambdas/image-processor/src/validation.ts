@@ -1,5 +1,3 @@
-// Same codes and limits as the listing service's upload-url checks. Those trust
-// what the client declares, these look at the file that actually arrived.
 export const MAX_SIZE_BYTES = 4 * 1024 * 1024;
 export const MIN_DIMENSION = 200;
 export const MAX_DIMENSION = 8000;

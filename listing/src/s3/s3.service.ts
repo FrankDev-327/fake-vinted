@@ -9,12 +9,10 @@ import {
 } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 
-const DELETE_OBJECTS_BATCH_SIZE = 1000; // S3 limit per DeleteObjects call
+const DELETE_OBJECTS_BATCH_SIZE = 1000;
 
 @Injectable()
 export class S3Service {
-    // Two clients because the host is part of the signature: listing talks to
-    // http://floci:4566, while clients upload through the published port.
     private readonly internalClient: S3Client;
     private readonly publicClient: S3Client;
     private readonly bucket: string;
@@ -32,7 +30,6 @@ export class S3Service {
             region,
             endpoint: configService.getOrThrow<string>('S3_PUBLIC_ENDPOINT'),
             forcePathStyle: true,
-            // otherwise the SDK adds a CRC32 checksum to the URL that clients would have to match
             requestChecksumCalculation: 'WHEN_REQUIRED',
         });
     }
@@ -45,7 +42,6 @@ export class S3Service {
         );
     }
 
-    /** Returns null when the object doesn't exist. */
     async headObject(key: string): Promise<HeadObjectCommandOutput | null> {
         try {
             return await this.internalClient.send(new HeadObjectCommand({ Bucket: this.bucket, Key: key }));

@@ -4,7 +4,6 @@ import { timingSafeEqual } from 'crypto';
 import { ProcessingResultDto } from './dto/listing-image.dto';
 import { ListingImagesService } from './listing-images.service';
 
-// Called by the image-processor Lambda, not reachable through the gateway.
 @Controller('internal/images')
 export class InternalImagesController {
     private readonly apiKey: Buffer;

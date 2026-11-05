@@ -22,10 +22,10 @@ import { APP_GUARD } from '@nestjs/core';
   ThrottlerModule.forRootAsync({
     imports: [ConfigModule],
     useFactory: (configService: ConfigService) => ([{
-      ttl: configService.get<number>('THROTTLE_TTL') ?? 60000, // 1 minute window
+      ttl: configService.get<number>('THROTTLE_TTL') ?? 60000,
       limit: configService.get<string>('NODE_ENV') === 'prod'
         ? configService.get<number>('THROTTLE_LIMIT') ?? 100
-        : 10000, // max 100 requests per window
+        : 10000,
     }]),
     inject: [ConfigService],
   }),
@@ -51,7 +51,7 @@ import { APP_GUARD } from '@nestjs/core';
   providers: [
     {
       provide: APP_GUARD,
-      useClass: ThrottlerGuard, // applies globally to all endpoints
+      useClass: ThrottlerGuard,
     },
   ],
 })

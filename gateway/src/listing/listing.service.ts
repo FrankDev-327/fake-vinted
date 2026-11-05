@@ -80,7 +80,7 @@ export class ListingService {
                 throw new NotFoundException((error as Error).message)
             }
 
-            throw new BadGatewayException((error as Error).message); //
+            throw new BadGatewayException((error as Error).message);
         }
     }
 
@@ -136,8 +136,6 @@ export class ListingService {
     async getImage(listingId: number, imageId: number, userId: number): Promise<any> {
         const response = await this.axiosService.forward('get', this.imagesUrl(listingId, String(imageId)), undefined, this.imageHeaders(userId));
 
-        // The Lambda talks to the listing service directly, so this is the first
-        // time the gateway can tell that a cached listing has gone stale.
         if (response.status !== 'pending') {
             await this.invalidateListingCache(listingId, userId);
         }

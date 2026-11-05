@@ -1,6 +1,5 @@
 FROM node:alpine as development
 WORKDIR /usr/src/app
-# Copy all config files in one line
 COPY package.json pnpm-lock.yaml tsconfig.json tsconfig.build.json orm.ts ./
 RUN npm install -g pnpm@8.6.7 && pnpm install 
 

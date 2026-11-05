@@ -1,4 +1,3 @@
-// create.message.dto.ts
 import { IsNumber, IsString, MinLength } from 'class-validator';
 
 export class CreateMessageDto {

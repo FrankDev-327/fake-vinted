@@ -14,11 +14,8 @@ async function bootstrap() {
   const configService = app.get(ConfigService);
   const port = configService.get('PORT');
 
-  // trust nginx as reverse proxy so req.ip reflects the real client IP
-  // (X-Real-IP / X-Forwarded-For), not the nginx container address
   app.set('trust proxy', 1);
 
-  // register global metrics interceptor
   const promService = app.get(PromGatewayService);
   app.useGlobalInterceptors(new MetricsInterceptor(promService))
 

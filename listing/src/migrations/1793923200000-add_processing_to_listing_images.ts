@@ -19,7 +19,6 @@ export class AddProcessingToListingImages1793923200000 implements MigrationInter
             new TableColumn({ name: 'height', type: 'int', isNullable: true }),
         ]);
 
-        // Images from before this migration were already validated when they were confirmed
         await queryRunner.manager
             .createQueryBuilder()
             .update(this.tableName)

@@ -5,7 +5,7 @@ import { ListingCondition, ListingStatus } from '../../entities/listing.entity';
 export class SearchListingDto {
     @IsString()
     @IsOptional()
-    q?: string; // search query
+    q?: string;
 
     @IsString()
     @IsOptional()

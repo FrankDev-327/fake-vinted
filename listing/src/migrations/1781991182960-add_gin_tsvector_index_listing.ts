@@ -4,12 +4,10 @@ export class AddGinTsvectorIndexListing1781991182960 implements MigrationInterfa
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         try {
-            // add tsvector column
             await queryRunner.query(`
                 ALTER TABLE listings ADD COLUMN IF NOT EXISTS search_vector tsvector;
             `);
 
-            // populate existing rows
             await queryRunner.query(`
                 UPDATE listings 
                 SET search_vector = to_tsvector('english', 
@@ -21,12 +19,10 @@ export class AddGinTsvectorIndexListing1781991182960 implements MigrationInterfa
                 );
             `);
 
-            // create GIN index
             await queryRunner.query(`
                 CREATE INDEX IF NOT EXISTS listings_search_idx ON listings USING GIN(search_vector);
             `);
 
-            // create trigger to auto update search_vector on insert/update
             await queryRunner.query(`
                 CREATE OR REPLACE FUNCTION listings_search_vector_update() RETURNS trigger AS $$
                 BEGIN

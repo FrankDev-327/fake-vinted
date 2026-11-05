@@ -1,4 +1,3 @@
-// create.conversation.dto.ts
 import { IsNumber } from 'class-validator';
 
 export class CreateConversationDto {

@@ -1,7 +1,4 @@
 #!/bin/sh
-# Deploys the image-processor Lambda and connects it to the bucket. Runs on every boot
-# and with persistent storage the function may already exist, so it updates it instead:
-# that way a rebuilt image always ends up running the latest code.
 set -eu
 
 FUNCTION=image-processor
@@ -20,7 +17,6 @@ else
     --zip-file "$ZIP" >/dev/null
 fi
 
-# Only listings/ triggers it. Thumbnails go to thumbnails/, so it can't trigger itself.
 aws s3api put-bucket-notification-configuration --bucket "$S3_BUCKET" --notification-configuration '{
   "LambdaFunctionConfigurations": [{
     "Id": "process-listing-images",

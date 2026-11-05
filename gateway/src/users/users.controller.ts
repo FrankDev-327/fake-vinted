@@ -19,7 +19,6 @@ export class UsersController {
     @SkipThrottle()
     @Post()
     @ApiOperation({ summary: 'Creation of an user' })
-    // @ApiOkResponse({ type: LoginUserDto })
     @ApiBadRequestResponse({
         description: 'Error creating user.',
     })
@@ -30,7 +29,6 @@ export class UsersController {
     @UseGuards(JwtguardGuard)
     @Put(':id')
     @ApiOperation({ summary: 'Update of an user' })
-    // @ApiOkResponse({ type: LoginUserDto })
     @ApiBadRequestResponse({
         description: 'Error updating user.',
     })
@@ -41,7 +39,6 @@ export class UsersController {
     @UseGuards(JwtguardGuard)
     @Get(':id')
     @ApiOperation({ summary: 'Get info of an user' })
-    // @ApiOkResponse({ type: LoginUserDto })
     @ApiBadRequestResponse({
         description: 'Error getting details user.',
     })

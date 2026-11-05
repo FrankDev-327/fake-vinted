@@ -9,7 +9,6 @@ export class AxiosServiceService {
     constructor(private readonly httpService: HttpService,
         private readonly logs: Logs) { }
 
-    // Unlike the helpers below, keeps the upstream's 4xx instead of turning it into a 502.
     async forward(method: 'get' | 'post' | 'delete', url: string, data: any, headers: Record<string, string>): Promise<any> {
         try {
             const { data: responseData } = await firstValueFrom(

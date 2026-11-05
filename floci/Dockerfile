@@ -1,5 +1,3 @@
-# Packages the image-processor Lambda inside the Floci image, so the init hook can
-# deploy it on boot. Runs on glibc like the Lambda runtime, which matters for sharp.
 FROM node:22-slim AS lambda
 WORKDIR /build
 RUN apt-get update && apt-get install -y --no-install-recommends zip

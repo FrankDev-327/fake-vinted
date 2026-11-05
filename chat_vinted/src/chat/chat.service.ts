@@ -49,7 +49,7 @@ export class ChatService {
             const messageSaved = await this.messageRepository.save(messageCreated);
 
             this.notificationsClient.emit('new_message', {
-                user_id: conversation.seller_id, // notify the other person
+                user_id: conversation.seller_id,
                 sender_id: dto.sender_id,
                 conversation_id: dto.conversation_id,
                 listing_id: conversation.listing_id,

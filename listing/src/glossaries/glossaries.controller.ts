@@ -19,7 +19,6 @@ export class GlossariesController {
         return await this.glossaryService.findAll();
     }
 
-    // static routes before dynamic ones
     @Delete('truncate')
     async truncateListingsTable(): Promise<void> {
         return await this.glossaryService.truncateListinsTable();
@@ -35,7 +34,6 @@ export class GlossariesController {
         return await this.glossaryService.findByUserId(user_id);
     }
 
-    // dynamic routes last
     @Get(':id')
     async findById(@Param('id') id: number): Promise<ListingEntity> {
         return await this.glossaryService.findById(id);

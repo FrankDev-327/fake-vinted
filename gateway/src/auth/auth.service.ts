@@ -35,7 +35,7 @@ export class AuthService {
         } catch (error) {
             this.promGatewayService.incrementRequestCounter('POST', '/users/authenticate', 502);
             this.logs.error(`Error authenticating user: ${(error as Error).message}`, error);
-            throw new BadGatewayException((error as Error).message, error); // Handle errors appropriately
+            throw new BadGatewayException((error as Error).message, error);
         }
     }
 }

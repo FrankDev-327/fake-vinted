@@ -1,8 +1,4 @@
 #!/bin/bash
-# Runs automatically by the official postgres image on first init
-# (only when the data directory is empty), before any dependent
-# service starts. Reads a comma-separated POSTGRES_MULTIPLE_DATABASES
-# env var and creates one database per entry, owned by POSTGRES_USER.
 set -e
 set -u
 

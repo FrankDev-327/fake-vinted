@@ -13,7 +13,6 @@ export class Logs implements LoggerService {
             ),
             transports: [
                 new transports.File({ filename: `logs/${fileCustomName}.log` }),
-                // Alloy reads stdout and ships it to Loki
                 new transports.Console(),
             ],
         });
@@ -46,23 +45,14 @@ export class Logs implements LoggerService {
 
     printLogs(message: string) {
         this.logger.info(message);
-        /*       if (process.env.NODE_ENV === 'dev') {
-                  this.logger.log(message);
-              } */
     }
 
     printError(message: string) {
         this.logger.error(message);
-        /*    if (process.env.NODE_ENV === 'dev') {
-               this.logger.error(message);
-           } */
 
     }
 
     printWarn(message: string) {
-        /*  if (process.env.NODE_ENV === 'dev') {
-             this.logger.warn(message);
-         } */
     }
 
 }

@@ -13,7 +13,6 @@ export class LogsService implements LoggerService {
             ),
             transports: [
                 new transports.File({ filename: `logs/${fileCustomName}.log` }),
-                // Alloy reads stdout and ships it to Loki
                 new transports.Console(),
             ],
         });

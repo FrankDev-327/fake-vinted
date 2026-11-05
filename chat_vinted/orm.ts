@@ -9,7 +9,7 @@ export const dbdatasource: DataSourceOptions = {
     password: process.env.DB_USER_PASSWORD,
     host: process.env.DATABASE_IP,
     logger: 'file',
-    maxQueryExecutionTime: 1000, //will log slow queries
+    maxQueryExecutionTime: 1000,
     entities: ['dist/**/*.entity{.ts,.js}'],
     migrations: ['dist/src/migrations/*{.ts,.js}'],
     subscribers: [],

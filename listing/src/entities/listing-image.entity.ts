@@ -65,7 +65,6 @@ export class ListingImageEntity {
     @CreateDateColumn()
     created_at: Date;
 
-    // Only the keys are stored, so moving to another host or a CDN doesn't need a data migration.
     url: string;
     thumbnail_url: string | null;
 
